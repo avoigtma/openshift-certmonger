@@ -1,0 +1,82 @@
+apiVersion: v1
+kind: Template
+labels:
+  template: job-routecreation-template
+message: This templates intantiates a Job creating a route in a target namespace and requests a route-specific TLS certificate using 'certmonger' tool from a SCEP API.
+metadata:
+  annotations:
+    description: This templates intantiates a Job creating a route in a target namespace and requests a route-specific TLS certificate using 'certmonger' tool from a SCEP API.
+    iconClass: icon-none
+    openshift.io/display-name: Job Application Template
+    template.openshift.io/documentation-url: TODO
+    template.openshift.io/long-description: This templates intantiates a Job creating a route in a target namespace and requests a route-specific TLS certificate using 'certmonger' tool from a SCEP API.
+    template.openshift.io/provider-display-name: TODO
+    template.openshift.io/support-url: TODO
+  name: job-routecreation-template
+objects:
+- apiVersion: batch/v1
+  kind: Job
+  metadata:
+    name: certmonger-${JOBUUID}
+  spec:
+    parallelism: 1
+    completions: 1
+    activeDeadlineSeconds: 300
+    backoffLimit: 2
+    template:
+      metadata:
+        name: certmonger-${JOBUUID}
+      spec:
+        containers:
+        - name: certmonger
+          image: image-registry.openshift-image-registry.svc:5000/${TOOL_NAMESPACE}/certmonger:latest
+          command:
+            - /bin/bash
+            - -c
+            - |
+              #!/bin/bash
+              export SERVICENAME=${SERVICENAME}
+              export ROUTENAME=${ROUTENAME}
+              export TARGET_NAMESPACE=${TARGET_NAMESPACE}
+              export HOSTNAME=${HOSTNAME}
+              export PORT=${PORT}
+              . /tools/cm/runJob.sh
+          volumeMounts:
+          - mountPath: /tools/cm
+            name: script
+            readOnly: true
+        restartPolicy: OnFailure
+        serviceAccount: certmonger-job-sa
+        securityContext:
+          runAsUser: 0
+        volumes:
+        - name: script
+          configMap:
+            name: route-creation-script
+parameters:
+- name: TARGET_NAMESPACE
+  description: the namespace name where the route is being created
+  required: true
+- name: SERVICENAME
+  description: the name of the service object exposed by the route
+  required: true
+- name: ROUTENAME
+  description: the name of the route object to be created;
+  required: true
+- name: HOSTNAME
+  description: the FQDN of the route
+  required: true
+- name: PORT
+  description: the port number of the inbound port of the service to which the route is pointing to
+  required: true
+- name: ROUTETYPE
+  description: type of the route to be created; use either 'edge' or 'passthru'
+  required: true
+  value: edge
+- name: TOOL_NAMESPACE
+  description: namespace of where the route creation tool is running
+  value: cluster-operations
+- name: JOBUUID
+  description: application parameter
+  from: "[a-z0-9]{8}"
+  generate: "expression"

@@ -1,0 +1,10 @@
+apiVersion: authorization.openshift.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: job-certmonger
+roleRef:
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: certmonger-job-sa
+  namespace: "cluster-operations"

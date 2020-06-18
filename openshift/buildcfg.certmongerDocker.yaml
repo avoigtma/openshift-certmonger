@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: BuildConfig
+metadata:
+  labels:
+    build: certmonger
+  name: certmonger
+spec:
+  output:
+    to:
+      kind: ImageStreamTag
+      name: certmonger:latest
+      namespace: cluster-operations
+  postCommit: {}
+  resources: {}
+  runPolicy: Serial
+  source:
+    git:
+      uri: https://github.com/avoigtma/my-openshift-examples.git
+    contextDir: dockerbuilds/certmonger-job/docker
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: Dockerfile-ose-cli-certmonger.docker
+      from:
+        kind: ImageStreamTag
+        name: centos:latest
+        namespace: openshift
+      noCache: true
+  triggers:
+  - type: ImageChange
+    imageChange:
+      from:
+        kind: "ImageStreamTag"
+        name: centos:latest
+        namespace: openshift
+  - type: ConfigChange

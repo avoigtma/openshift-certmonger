@@ -1,0 +1,54 @@
+FROM centos:centos8
+
+# change to ENV variable
+ARG OCVERSION=4.4.5
+ARG USER=1001
+ARG APP_ROOT=/tools
+
+USER root
+
+ENV container=oci
+
+# install some additional packages
+RUN INSTALL_PKGS="systemd wget net-tools less certmonger"; \
+    yum install -q -y --setopt=tsflags=nodocs $INSTALL_PKGS; \
+    rpm -V $INSTALL_PKGS; \
+    yum -y -q update; \
+    yum -q clean all; \
+	(cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == systemd-tmpfiles-setup.service ] || rm -f $i; done); \
+	rm -f /lib/systemd/system/multi-user.target.wants/*; \
+	rm -f /etc/systemd/system/*.wants/*; \
+	rm -f /lib/systemd/system/local-fs.target.wants/*; \
+	rm -f /lib/systemd/system/sockets.target.wants/*udev*; \
+	rm -f /lib/systemd/system/sockets.target.wants/*initctl*; \
+	rm -f /lib/systemd/system/basic.target.wants/*; \
+	rm -f /lib/systemd/system/anaconda.target.wants/*
+
+VOLUME ["/sys/fs/cgroup"]
+STOPSIGNAL SIGRTMIN+3
+
+RUN mkdir -p ${APP_ROOT}/bin \
+    && chmod g+w ${APP_ROOT}
+
+# copy required scripts to image and install 'oc' client
+COPY scripts/* ${APP_ROOT}/bin/
+RUN wget --no-verbose https://mirror.openshift.com/pub/openshift-v4/clients/ocp/$OCVERSION/openshift-client-linux-$OCVERSION.tar.gz \
+    && tar -xf openshift-client-linux-$OCVERSION.tar.gz \
+    && mv -v {oc,kubectl} ${APP_ROOT}/bin \
+    && rm -f openshift-client-linux-$OCVERSION.tar.gz
+
+ENV PATH=${APP_ROOT}/bin:${PATH} HOME=${APP_ROOT}
+           
+RUN chmod 755 ${APP_ROOT}/bin/* \
+    && chgrp -R 0 ${APP_ROOT} \
+    && chmod -R g=u ${APP_ROOT} \
+    && chmod g=u /etc/passwd
+
+# switch to user
+USER $USER
+WORKDIR ${APP_ROOT}
+
+ENTRYPOINT [ "uid_entrypoint" ]
+
+CMD ["/usr/lib/systemd/systemd --system --unit=basic.target"]
+

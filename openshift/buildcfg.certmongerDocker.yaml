@@ -15,8 +15,8 @@ spec:
   runPolicy: Serial
   source:
     git:
-      uri: https://github.com/avoigtma/my-openshift-examples.git
-    contextDir: dockerbuilds/certmonger-job/docker
+      uri: https://github.com/avoigtma/openshift-certmonger.git
+    contextDir: docker
   strategy:
     type: Docker
     dockerStrategy:

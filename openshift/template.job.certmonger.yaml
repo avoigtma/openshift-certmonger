@@ -77,6 +77,5 @@ parameters:
   description: namespace of where the route creation tool is running
   value: cluster-operations
 - name: JOBUUID
-  description: application parameter
-  from: "[a-z0-9]{8}"
-  generate: "expression"
+  description: id for job (matching the request uuid)
+  required: true

@@ -1,0 +1,35 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: process-certrequests
+  namespace: certificate-tool
+spec:
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  schedule: "*/2 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: certmonger
+            image: image-registry.openshift-image-registry.svc:5000/certificate-tool/certmonger:latest
+            volumeMounts:
+              - mountPath: /tools/cm
+                name: script
+                readOnly: true
+            command:
+              - /bin/bash
+              - -c
+              - |
+                #/bin/bash
+                . /tools/cm/cronProcess.sh
+          restartPolicy: OnFailure
+          serviceAccountName: certmonger-job-sa
+          securityContext:
+            runAsUser: 0
+          volumes:
+          - name: script
+            configMap:
+              name: cronjob-process-script
+

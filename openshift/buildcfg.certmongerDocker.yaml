@@ -4,11 +4,13 @@ metadata:
   labels:
     build: certmonger
   name: certmonger
+  namespace: certificate-tool
 spec:
   output:
     to:
       kind: ImageStreamTag
       name: certmonger:latest
+      namespace: certificate-tool
   postCommit: {}
   resources: {}
   runPolicy: Serial

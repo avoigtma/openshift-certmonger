@@ -1,0 +1,13 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: job-initiator-role
+  namespace: certificate-tool
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: job-initiator-role
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: system:authenticated

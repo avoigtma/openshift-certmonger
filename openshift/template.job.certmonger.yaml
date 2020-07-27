@@ -13,6 +13,7 @@ metadata:
     template.openshift.io/provider-display-name: TODO
     template.openshift.io/support-url: TODO
   name: job-routecreation-template
+  namespace: certificate-tool
 objects:
 - apiVersion: batch/v1
   kind: Job
@@ -75,7 +76,7 @@ parameters:
   value: edge
 - name: TOOL_NAMESPACE
   description: namespace of where the route creation tool is running
-  value: cluster-operations
+  value: certificate-tool
 - name: JOBUUID
   description: id for job (matching the request uuid)
   required: true

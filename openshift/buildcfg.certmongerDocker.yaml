@@ -9,7 +9,6 @@ spec:
     to:
       kind: ImageStreamTag
       name: certmonger:latest
-      namespace: cluster-operations
   postCommit: {}
   resources: {}
   runPolicy: Serial

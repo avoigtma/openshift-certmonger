@@ -10,7 +10,7 @@ USER root
 ENV container=oci
 
 # install some additional packages
-RUN INSTALL_PKGS="systemd wget net-tools less certmonger jq"; \
+RUN INSTALL_PKGS="systemd wget net-tools less certmonger jq git"; \
     yum install -q -y --setopt=tsflags=nodocs $INSTALL_PKGS; \
     rpm -V $INSTALL_PKGS; \
     yum -y -q update; \

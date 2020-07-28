@@ -41,7 +41,7 @@ Run the steps described in the next sections for deployment.
 
 Create a namespace for hosting the 'certmonger' tool.
 
-We use a namespace called 'cluster-operations' which may host any kind of operation-support tools for the platform. But any other namespace can be used as well. Please note you need to adjust the Yaml files respectively.
+We use a namespace called 'certificate-tool' which may host any kind of operation-support tools for the platform. But any other namespace can be used as well. Please note you need to adjust the Yaml files respectively.
 
 ```shell
 oc new-project certificate-tool
@@ -129,7 +129,7 @@ oc create -f openshift/crb.certmongerJob.yaml
 The job needs to run with a fixed user id, hence add the service account to 'anyuid' SCC.
 
 ```shell
-oc adm policy add-scc-to-user anyuid -z certmonger-job-sa -n cluster-operations
+oc adm policy add-scc-to-user anyuid -z certmonger-job-sa -n certificate-tool
 ```
 
 ### Deploy Certificate Tool
@@ -153,7 +153,7 @@ Create the CronJob to monitor the created requests and execute the certificate/r
 > Please adjust the schedule of the CronJob. Example runs every 2 minutes.
 
 ```shell
-oc create -f openshift/cronJob.certMonger.yaml
+oc create -f openshift/cronJob.certmonger.yaml
 ```
 
 #### (optional/debug) Instantiate Job using template
@@ -168,7 +168,7 @@ See the template definition for the mandatory and optional parameters.
 Sample execution:
 
 ```shell
-oc process -f openshift/template.job.certmonger.yaml -p TOOL_NAMESPACE=cluster-operations -p SERVICENAME=httpd-example -p PORT=8080 -p ROUTENAME=myhttp -p TARGET_NAMESPACE=example-ns -p HOSTNAME=bla.example.com | oc create -f -
+oc process -f openshift/template.job.certmonger.yaml -p TOOL_NAMESPACE=certificate-tool -p SERVICENAME=httpd-example -p PORT=8080 -p ROUTENAME=myhttp -p TARGET_NAMESPACE=example-ns -p HOSTNAME=bla.example.com | oc create -f -
 ```
 
 or using 'oc new-app' respectively.

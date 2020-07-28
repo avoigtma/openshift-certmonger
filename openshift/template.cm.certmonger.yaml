@@ -61,7 +61,7 @@ parameters:
   value: edge
 - name: TOOL_NAMESPACE
   description: namespace of where the route creation tool is running
-  value: cluster-operations
+  value: certificate-tool
 - name: CMTOOLSUUID
   displayName: do-not-fill-in-will-be-generated-cmtoolsuuid
   description: uuid parameter for CM in tools namespace

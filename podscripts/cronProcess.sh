@@ -1,4 +1,10 @@
 #!/bin/bash
+
+# set NO_PROXY if needed for your environment
+# NO_PROXY should cover: API server, (internal) registry, node subnet, pod subnet, services subnet (IP and DNS), plus any other local DNS domain not to be proxied
+#
+# export NO_PROXY=any-noproxy-domain-list,.clustername.basedomain,NODE-SUBNET-CIDR,POD-SUBNET-CIDR,SERVICE-SUBNET-CIDR,.openshift-image-registry.svc,.svc
+
 echo "Processing ConfigMaps representing Certificate and Route creation requests"
 
 create_err_cm() {
@@ -22,7 +28,7 @@ do
     oc get cm $APPCMNAME -n $APPNS -o json >/tmp/$APPCMNAME.json
     retVal=$?
     if [ $retVal -ne 0 ]; then
-        err="Error ($cm): ConfigMap $APPCMNAME in application namespace $APPNS does not exist or cannot be retrieved. Stop processing this taks." 
+        err="Error ($cm): ConfigMap $APPCMNAME in application namespace $APPNS does not exist or cannot be retrieved. Stop processing this taks."
         echo $err
         create_err_cm $cm "$err"
         continue
@@ -30,7 +36,7 @@ do
 
     APPAPPUUID=$(jq -r '.data.taskuuid' /tmp/$APPCMNAME.json)
     if [ $APPAPPUUID != $APPUUID ]; then
-        err="Error ($cm): AppUUID value differs from creation request and value ConfigMap in application namespace. Suspecting fraud. Stop processing this taks." 
+        err="Error ($cm): AppUUID value differs from creation request and value ConfigMap in application namespace. Suspecting fraud. Stop processing this taks."
         echo $err
         create_err_cm $cm "$err"
         remove_cm $cm
@@ -47,7 +53,7 @@ do
     oc new-app -n $TOOLNS job-routecreation-template -p TOOL_NAMESPACE=$TOOLNS -p SERVICENAME=$SERVICENAME -p PORT=$PORT -p ROUTENAME=$ROUTENAME -p TARGET_NAMESPACE=$TARGETNAMESPACE -p HOSTNAME=$HOSTNAME -p JOBUUID=$taskid
     retVal=$?
     if [ $retVal -ne 0 ]; then
-        err="Error ($cm): Cannot process template for creating CertMonger job. Stop processing this taks." 
+        err="Error ($cm): Cannot process template for creating CertMonger job. Stop processing this taks."
         echo $err
         create_err_cm $cm "$err"
         remove_cm $cm

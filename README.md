@@ -134,12 +134,40 @@ oc adm policy add-scc-to-user anyuid -z certmonger-job-sa -n certificate-tool
 
 ### Deploy Certificate Tool
 
-#### Create ConfigMap
+#### Create ConfigMaps
+
+##### ConfigMaps holding Corporate Root CA
+
+Unless the example for self-signed certificates is used, the Job requesting the certificate requires to have 
+the corporate root CA (public key part) to be part of the container's trust store.
+
+We use a Secret to hold the root CA and mount this Secret into the Job pod.
+
+```shell
+oc create secret generic ca-secret --from-file=ca.crt=/path/to/ca.crt
+```
+
+When using the self-signed example simply create a secret with a dummy value, as the secret is not used, for example:
+
+```shell
+oc create secret generic ca-secret --from-literal=ca.crt=dummy
+```
+
+
+##### ConfigMaps holding scripts
 
 We use a ConfigMap to hold the script code executed by the Job and the CronJob.
 
 * Use CertMonger to request a certificate from the PKI.
 * Use 'oc' to create the route object.
+
+> Note: *noproxy settings*
+>
+> The scripts - depending on environment - may need 'noproxy' settings for successful communication to OpenShift API Server or PKI. Please adjust the 'noproxy' settings in the script accordingly.
+
+> Note: *Using PKI instead of selfsigned certificates.*
+>
+> The 'runJob.sh' script is creating self-signed certificates and acts as an example which can run in any OpenShift environment, irrespective of a specific PKI/SCEP server being used. The 'podscripts' directory contains an alternate 'runJob_scep-example.sh' script which provides the example of accessing a SCEP server.
 
 ```shell
 oc create cm route-creation-script --from-file=runJob.sh=./podscripts/runJob.sh

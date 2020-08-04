@@ -23,7 +23,7 @@ objects:
     parallelism: 1
     completions: 1
     activeDeadlineSeconds: 300
-    backoffLimit: 2
+    backoffLimit: 0
     template:
       metadata:
         name: certmonger-${JOBUUID}
@@ -31,6 +31,12 @@ objects:
         containers:
         - name: certmonger
           image: image-registry.openshift-image-registry.svc:5000/${TOOL_NAMESPACE}/certmonger:latest
+          env:
+            - name: PKIPASSPHRASE
+              valueFrom:
+                secretKeyRef:
+                  key: passphrase
+                  name: pki-secret
           command:
             - /bin/bash
             - -c
@@ -43,6 +49,9 @@ objects:
               export PORT=${PORT}
               . /tools/cm/runJob.sh
           volumeMounts:
+          - mountPath: /tools/ca
+            name: ca
+            readOnly: true
           - mountPath: /tools/cm
             name: script
             readOnly: true
@@ -51,32 +60,35 @@ objects:
         securityContext:
           runAsUser: 0
         volumes:
+        - name: ca
+          secret:
+            secretName: ca-secret
         - name: script
           configMap:
             name: route-creation-script
 parameters:
 - name: TARGET_NAMESPACE
-  description: the namespace name where the route is being created
+  description: The namespace name where the route is being created.
   required: true
 - name: SERVICENAME
-  description: the name of the service object exposed by the route
+  description: The name of the service object exposed by the route. This service already exists in the target namespace.
   required: true
 - name: ROUTENAME
-  description: the name of the route object to be created;
+  description: The name of the route object to be created.
   required: true
 - name: HOSTNAME
-  description: the FQDN of the route
+  description: The FQDN of the route to be created. Ensure the length adheres to OpenShift / DNS conventions, i.e., max length 63 characters.
   required: true
 - name: PORT
-  description: the port number of the inbound port of the service to which the route is pointing to
+  description: The port number of the inbound port of the service to which the route is pointing to.
   required: true
 - name: ROUTETYPE
-  description: type of the route to be created; use either 'edge' or 'passthru'
+  description: The type of the route to be created. Use either 'edge' or 'passthru'.
   required: true
   value: edge
 - name: TOOL_NAMESPACE
-  description: namespace of where the route creation tool is running
+  description: The namespace of where the route creation tool is running. Change only if you are sure the tool is deployed in a specific different namespace.
   value: certificate-tool
 - name: JOBUUID
-  description: id for job (matching the request uuid)
+  description: The id for the job (matching the request uuid) performing the certificate request.
   required: true

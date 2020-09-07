@@ -2,14 +2,14 @@ apiVersion: v1
 kind: Template
 labels:
   template: routecreation-request-template
-message: This templates intantiates a Job creating a route in a target namespace and requests a route-specific TLS certificate using 'certmonger' tool from a SCEP API.
+message: This templates instantiates a Job creating a route in a target namespace and requests a route-specific TLS certificate using 'certmonger' tool from a SCEP API.
 metadata:
   annotations:
-    description: This templates intantiates data for triggering the creation of a route in a target namespace and requests a route-specific TLS certificate using 'certmonger' tool from a SCEP API.
+    description: This templates instantiates data for triggering the creation of a route in a target namespace and requests a route-specific TLS certificate using 'certmonger' tool from a SCEP API.
     iconClass: icon-none
     openshift.io/display-name: Route Creation Request Template
     template.openshift.io/documentation-url: TODO
-    template.openshift.io/long-description: This templates intantiates data for triggering the creation of a route in a target namespace and requests a route-specific TLS certificate using 'certmonger' tool from a SCEP API.
+    template.openshift.io/long-description: This templates instantiates data for triggering the creation of a route in a target namespace and requests a route-specific TLS certificate using 'certmonger' tool from a SCEP API.
     template.openshift.io/provider-display-name: TODO
     template.openshift.io/support-url: TODO
   name: routecreation-request-template

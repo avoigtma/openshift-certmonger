@@ -9,5 +9,6 @@ roleRef:
   name: job-initiator-role
 subjects:
 - apiGroup: rbac.authorization.k8s.io
-  kind: User
+  kind: Group
   name: system:authenticated
+

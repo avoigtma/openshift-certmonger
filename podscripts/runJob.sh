@@ -27,6 +27,6 @@ CERTFILE=/tmp/cert.crt
 KEYFILE=/tmp/cert.key
 echo "Creating route in namespace $TARGET_NAMESPACE"
 oc create cm -n $TARGET_NAMESPACE route-$ROUTENAME-certs --from-file=cert.cer=$CERTFILE --from-file=cert.key=$KEYFILE --from-file=ca.cer=$CAFILE
-oc create $ROUTETYPE $ROUTENAME -n $TARGET_NAMESPACE --service=$SERVICENAME --cert=$CERTFILE --key=$KEYFILE --ca-cert=$CAFILE --hostname=$HOSTNAME --port=$PORT
+oc create route $ROUTETYPE $ROUTENAME -n $TARGET_NAMESPACE --service=$SERVICENAME --cert=$CERTFILE --key=$KEYFILE --ca-cert=$CAFILE --hostname=$HOSTNAME --port=$PORT
 echo "Route created"
 #

@@ -11,6 +11,7 @@ echo "Executing certificate request"
 # The following environment variables are set from the pod executing this script snippet:
 # $HOSTNAME
 # $ROUTENAME
+# $ROUTETYPE
 # $SERVICENAME
 # $PORT
 # $TARGET_NAMESPACE
@@ -39,6 +40,6 @@ CERTFILE=/tmp/cert.crt
 KEYFILE=/tmp/cert.key
 echo "Creating route in namespace $TARGET_NAMESPACE"
 oc create cm -n $TARGET_NAMESPACE route-$ROUTENAME-certs --from-file=cert.cer=$CERTFILE --from-file=cert.key=$KEYFILE
-oc create route edge $ROUTENAME -n $TARGET_NAMESPACE --service=$SERVICENAME --cert=$CERTFILE --key=$KEYFILE --hostname=$HOSTNAME --port=$PORT
+oc create route $ROUTETYPE $ROUTENAME -n $TARGET_NAMESPACE --service=$SERVICENAME --cert=$CERTFILE --key=$KEYFILE --hostname=$HOSTNAME --port=$PORT
 echo "Route created"
 #

@@ -44,6 +44,7 @@ objects:
               #!/bin/bash
               export SERVICENAME=${SERVICENAME}
               export ROUTENAME=${ROUTENAME}
+              export ROUTETYPE=${ROUTETYPE}
               export TARGET_NAMESPACE=${TARGET_NAMESPACE}
               export HOSTNAME=${HOSTNAME}
               export PORT=${PORT}

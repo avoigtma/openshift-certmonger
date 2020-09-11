@@ -50,7 +50,7 @@ do
     PORT=$(jq -r '.data.port' /tmp/$APPCMNAME.json)
     HOSTNAME=$(jq -r '.data.hostname' /tmp/$APPCMNAME.json)
 
-    oc new-app -n $TOOLNS job-routecreation-template -p TOOL_NAMESPACE=$TOOLNS -p SERVICENAME=$SERVICENAME -p PORT=$PORT -p ROUTENAME=$ROUTENAME -p TARGET_NAMESPACE=$TARGETNAMESPACE -p HOSTNAME=$HOSTNAME -p JOBUUID=$taskid
+    oc new-app -n $TOOLNS job-routecreation-template -p TOOL_NAMESPACE=$TOOLNS -p SERVICENAME=$SERVICENAME -p PORT=$PORT -p ROUTENAME=$ROUTENAME -p ROUTETYPE=$ROUTETYPE -p TARGET_NAMESPACE=$TARGETNAMESPACE -p HOSTNAME=$HOSTNAME -p JOBUUID=$taskid
     retVal=$?
     if [ $retVal -ne 0 ]; then
         err="Error ($cm): Cannot process template for creating CertMonger job. Stop processing this taks."

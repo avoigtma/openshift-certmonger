@@ -134,9 +134,9 @@ oc adm policy add-scc-to-user anyuid -z certmonger-job-sa -n certificate-tool
 
 ### Deploy Certificate Tool
 
-#### Create ConfigMaps
+#### Create ConfigMaps and Secrets
 
-##### ConfigMaps holding Corporate Root CA
+##### Secrets holding Corporate Root CA
 
 Unless the example for self-signed certificates is used, the Job requesting the certificate requires to have 
 the corporate root CA (public key part) to be part of the container's trust store.
@@ -151,6 +151,14 @@ When using the self-signed example simply create a secret with a dummy value, as
 
 ```shell
 oc create secret generic ca-secret --from-literal=ca.crt=dummy
+```
+
+##### Secret for PKI access
+
+When accessing the PKI using SCEP protocol, a passphrase must be provided. This passphrase is managed in a secret which is loaded into the certmonger pod interacting with the PKI using SCEP.
+
+```shell
+oc create secret generic pki-secret --from-literal=passphrase=supersecret
 ```
 
 
@@ -196,7 +204,7 @@ See the template definition for the mandatory and optional parameters.
 Sample execution:
 
 ```shell
-oc process -f openshift/template.job.certmonger.yaml -p TOOL_NAMESPACE=certificate-tool -p SERVICENAME=httpd-example -p PORT=8080 -p ROUTENAME=myhttp -p ROUTETYPE=edge -p TARGET_NAMESPACE=example-ns -p HOSTNAME=bla.example.com | oc create -f -
+oc process -f openshift/template.job.certmonger.yaml -p TOOL_NAMESPACE=certificate-tool -p SERVICENAME=httpd-example -p PORT=8080 -p ROUTENAME=myhttp -p ROUTETYPE=edge -p TARGET_NAMESPACE=example-ns -p HOSTNAME=bla.example.com -p JOBUUID=12345 | oc create -f -
 ```
 
 or using 'oc new-app' respectively.
@@ -229,10 +237,7 @@ Or use the following command line:
 ```shell
 oc new-app routecreation-request-template -p TOOL_NAMESPACE=certificate-tool -p SERVICENAME=httpd -p PORT=8080 -p ROUTENAME=myhttp -p ROUTETYPE=edge -p TARGET_NAMESPACE=example-ns -p HOSTNAME=myhttpd.example.com
 ```
-# TODO
 
-* load template into OCP
-* role to access the tools-namespace by all-authenticated-users to allow execution of the template (but only list tempalte and instantiate it)
 
 # Technical Information
 
@@ -245,4 +250,7 @@ oc new-app routecreation-request-template -p TOOL_NAMESPACE=certificate-tool -p 
 * CronJob to processs route creation according to discovered ConfigMaps of above name pattern
     * process the certificate and route creation
     * remove config map afterwards
-
+* Error handling
+    * if the certmonger job pod fails, there is a config map called 'certmonger-XYZ-status' (XYZ the JobUUID of the CertMonger Job) in the certificate-tool namespace; this config map is created only in case of failure, not in case of success
+* Certificates
+    * The created certificates are placed in a secret in the application target namespace. The secret is called 'route-ABC-certs' (ABC = name of the route being created)

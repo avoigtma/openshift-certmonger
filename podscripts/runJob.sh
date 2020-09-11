@@ -25,8 +25,47 @@ echo "Certificate request completed"
 CAFILE=/tmp/ca.crt
 CERTFILE=/tmp/cert.crt
 KEYFILE=/tmp/cert.key
+DESTCAFILE=/tmp/reenc-ca.crt
+MSGFILE=/tmp/msg.txt
+ERR=""
 echo "Creating route in namespace $TARGET_NAMESPACE"
-oc create cm -n $TARGET_NAMESPACE route-$ROUTENAME-certs --from-file=cert.cer=$CERTFILE --from-file=cert.key=$KEYFILE --from-file=ca.cer=$CAFILE
-oc create route $ROUTETYPE $ROUTENAME -n $TARGET_NAMESPACE --service=$SERVICENAME --cert=$CERTFILE --key=$KEYFILE --ca-cert=$CAFILE --hostname=$HOSTNAME --port=$PORT
-echo "Route created"
+if [ $ROUTETYPE == edge ]
+then
+  echo "Creating edge route"
+  oc create route $ROUTETYPE $ROUTENAME -n $TARGET_NAMESPACE --insecure-policy=Redirect --service=$SERVICENAME --cert=$CERTFILE --key=$KEYFILE --ca-cert=$CAFILE --hostname=$HOSTNAME --port=$PORT >$MSGFILE 2>&1
+  RES=$?
+elif [ $ROUTETYPE == passthrough ]
+then
+  echo "Creating passthrough route"
+  oc create route $ROUTETYPE $ROUTENAME -n $TARGET_NAMESPACE --insecure-policy=Redirect --service=$SERVICENAME  --hostname=$HOSTNAME --port=$PORT >$MSGFILE 2>&1
+  RES=$?
+elif [ $ROUTETYPE == reencrypt ]
+then
+  echo "Creating reencrypt route"
+  oc get secret $REENC_CA_SECRET -n $TARGET_NAMESPACE -o json | jq '.data."tls.crt"' | sed 's/\"//g' | base64 -d >$DESTCAFILE
+  RES=$?
+  if [ $RES == 0 ]
+  then
+    oc create route $ROUTETYPE $ROUTENAME -n $TARGET_NAMESPACE --insecure-policy=Redirect --service=$SERVICENAME --cert=$CERTFILE --key=$KEYFILE --ca-cert=$CAFILE --dest-ca-cert=$DESTCAFILE --hostname=$HOSTNAME --port=$PORT >$MSGFILE 2>&1
+    RES=$?
+  else
+    ERR="$ROUTETYPE route: cannot get reencrypt cert $REENC_CA_SECRET in namespace $TARGET_NAMESPACE"
+    RES=1
+  fi
+else
+  ERR="unsupported route type $ROUTETYPE"
+  echo $ERR
+  RES=$?
+fi
+#
+if [ $RES == 0 ]
+then
+  echo "Route $ROUTETYPE $ROUTENAME created"
+  STATUS=success
+  oc create secret generic route-$ROUTENAME-certs -n $TARGET_NAMESPACE --from-file=cert.cer=$CERTFILE --from-file=cert.key=$KEYFILE --from-file=ca.cer=$CAFILE --from-file=destca.cer=$DESTCAFILE
+else
+  echo "Error creating route $ROUTETYPE $ROUTENAME : $ERR"
+  STATUS=failed
+  oc create cm -n $TOOL_NAMESPACE $JOB-status --from-literal=status=$STATUS --from-literal=errtext=$ERR --from-file=message=$MSGFILE
+fi
 #

@@ -45,9 +45,12 @@ objects:
               export SERVICENAME=${SERVICENAME}
               export ROUTENAME=${ROUTENAME}
               export ROUTETYPE=${ROUTETYPE}
+              export REENC_CA_SECRET=${REENC_CA_SECRET}
               export TARGET_NAMESPACE=${TARGET_NAMESPACE}
               export HOSTNAME=${HOSTNAME}
               export PORT=${PORT}
+              export JOB=certmonger-${JOBUUID}
+              export TOOL_NAMESPACE=${TOOL_NAMESPACE}
               . /tools/cm/runJob.sh
           volumeMounts:
           - mountPath: /tools/ca
@@ -87,6 +90,8 @@ parameters:
   description: The type of the route to be created. Use either 'edge' or 'passthru'.
   required: true
   value: edge
+- name: REENC_CA_SECRET
+  description: The name of a secret in the target namespace which must contain a certificate for reencrypting traffic. Optional - must only be provided if ROUTETYPE='reencrypt'.
 - name: TOOL_NAMESPACE
   description: The namespace of where the route creation tool is running. Change only if you are sure the tool is deployed in a specific different namespace.
   value: certificate-tool

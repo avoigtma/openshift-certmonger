@@ -38,6 +38,7 @@ objects:
     hostname: ${HOSTNAME}
     port: ${PORT}
     routeType: ${ROUTETYPE}
+    reencSecretName: ${REENC_CA_SECRET}
     taskuuid: ${TASKUUID}
 parameters:
 - name: TARGET_NAMESPACE
@@ -56,9 +57,11 @@ parameters:
   description: The port number of the inbound port of the service to which the route is pointing to.
   required: true
 - name: ROUTETYPE
-  description: The type of the route to be created. Use either 'edge' or 'passthru'.
+  description: The type of the route to be created. Use either 'edge', 'passthrough' or 'reencrypt'.
   required: true
   value: edge
+- name: REENC_CA_SECRET
+  description: The name of a secret in the target namespace which must contain a certificate for reencrypting traffic. Optional - must only be provided if ROUTETYPE='reencrypt'.
 - name: TOOL_NAMESPACE
   description: The namespace of where the route creation tool is running. Change only if you are sure the tool is deployed in a specific different namespace.
   value: certificate-tool

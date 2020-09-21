@@ -12,7 +12,7 @@ This document describes an approach how to create Route objects in OpenShift whi
 ## Repository Link
 Base repository link for all artefacts referenced in the following description: <https://github.com/avoigtma/openshift-certmonger>
 
->> In the remainder of the documents, all commands are executed in the 'certmonger-job' repository directory of the source repository.
+> In the remainder of the documents, all commands are executed in the 'certmonger-job' repository directory of the source repository.
 
 ## Overview
 

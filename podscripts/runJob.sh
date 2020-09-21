@@ -13,6 +13,7 @@ echo "Executing certificate request"
 #
 # replace the commands for 'certmonger' in this section with suitable commands for accessing the PKI
 # demo only using self-signed certificate; as for selfsigned certs there is no CA, we create a dummy ca.cer file
+# Do not use strings with whitespaces for CN, OU or O
 selfsign-getcert request -w -f /tmp/cert.crt -k /tmp/cert.key -N "CN=$FQDN,OU=example.com,O=myorg" -D "$FQDN" -U id-kp-serverAuth
 ls -l /tmp
 touch /tmp/ca.crt

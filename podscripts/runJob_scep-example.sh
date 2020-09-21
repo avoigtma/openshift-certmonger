@@ -26,6 +26,7 @@ update-ca-trust
 getcert add-scep-ca -c MY-SCEP-CA -u https://scep.pki.url.example.com/my/scep/pki/uri/xyz
 sleep 16
 # retrieve the certificate via SCEP
+# Do not use strings with whitespaces for CN, OU or O
 getcert request -I ${FQDN} -c MY-SCEP-CA -N "CN=${FQDN},OU=MyOrgUnitName,O=MyOrgName" -L $PKIPASSPHRASE -w -v -f /tmp/cert.crt -k /tmp/cert.key
 sleep 8
 #

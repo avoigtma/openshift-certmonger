@@ -2,7 +2,7 @@
 echo "Executing certificate request"
 #
 # The following environment variables are set from the pod executing this script snippet:
-# $HOSTNAME
+# $FQDN
 # $ROUTENAME
 # $ROUTETYPE
 # $SERVICENAME
@@ -13,7 +13,7 @@ echo "Executing certificate request"
 #
 # replace the commands for 'certmonger' in this section with suitable commands for accessing the PKI
 # demo only using self-signed certificate; as for selfsigned certs there is no CA, we create a dummy ca.cer file
-selfsign-getcert request -w -f /tmp/cert.crt -k /tmp/cert.key -N "CN=$HOSTNAME,OU=example.com,O=myorg" -D "$HOSTNAME" -U id-kp-serverAuth
+selfsign-getcert request -w -f /tmp/cert.crt -k /tmp/cert.key -N "CN=$FQDN,OU=example.com,O=myorg" -D "$FQDN" -U id-kp-serverAuth
 ls -l /tmp
 touch /tmp/ca.crt
 #
@@ -32,12 +32,12 @@ echo "Creating route in namespace $TARGET_NAMESPACE"
 if [ $ROUTETYPE == edge ]
 then
   echo "Creating edge route"
-  oc create route $ROUTETYPE $ROUTENAME -n $TARGET_NAMESPACE --insecure-policy=Redirect --service=$SERVICENAME --cert=$CERTFILE --key=$KEYFILE --ca-cert=$CAFILE --hostname=$HOSTNAME --port=$PORT >$MSGFILE 2>&1
+  oc create route $ROUTETYPE $ROUTENAME -n $TARGET_NAMESPACE --insecure-policy=Redirect --service=$SERVICENAME --cert=$CERTFILE --key=$KEYFILE --ca-cert=$CAFILE --hostname=$FQDN --port=$PORT >$MSGFILE 2>&1
   RES=$?
 elif [ $ROUTETYPE == passthrough ]
 then
   echo "Creating passthrough route"
-  oc create route $ROUTETYPE $ROUTENAME -n $TARGET_NAMESPACE --insecure-policy=Redirect --service=$SERVICENAME  --hostname=$HOSTNAME --port=$PORT >$MSGFILE 2>&1
+  oc create route $ROUTETYPE $ROUTENAME -n $TARGET_NAMESPACE --insecure-policy=Redirect --service=$SERVICENAME  --hostname=$FQDN --port=$PORT >$MSGFILE 2>&1
   RES=$?
 elif [ $ROUTETYPE == reencrypt ]
 then
@@ -46,7 +46,7 @@ then
   RES=$?
   if [ $RES == 0 ]
   then
-    oc create route $ROUTETYPE $ROUTENAME -n $TARGET_NAMESPACE --insecure-policy=Redirect --service=$SERVICENAME --cert=$CERTFILE --key=$KEYFILE --ca-cert=$CAFILE --dest-ca-cert=$DESTCAFILE --hostname=$HOSTNAME --port=$PORT >$MSGFILE 2>&1
+    oc create route $ROUTETYPE $ROUTENAME -n $TARGET_NAMESPACE --insecure-policy=Redirect --service=$SERVICENAME --cert=$CERTFILE --key=$KEYFILE --ca-cert=$CAFILE --dest-ca-cert=$DESTCAFILE --hostname=$FQDN --port=$PORT >$MSGFILE 2>&1
     RES=$?
   else
     ERR="$ROUTETYPE route: cannot get reencrypt cert $REENC_CA_SECRET in namespace $TARGET_NAMESPACE"

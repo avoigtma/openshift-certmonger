@@ -204,7 +204,7 @@ See the template definition for the mandatory and optional parameters.
 Sample execution:
 
 ```shell
-oc process -f openshift/template.job.certmonger.yaml -p TOOL_NAMESPACE=certificate-tool -p SERVICENAME=httpd-example -p PORT=8080 -p ROUTENAME=myhttp -p ROUTETYPE=edge -p TARGET_NAMESPACE=example-ns -p HOSTNAME=bla.example.com -p JOBUUID=12345 | oc create -f -
+oc process -f openshift/template.job.certmonger.yaml -p TOOL_NAMESPACE=certificate-tool -p SERVICENAME=httpd-example -p PORT=8080 -p ROUTENAME=myhttp -p ROUTETYPE=edge -p TARGET_NAMESPACE=example-ns -p FQDN=bla.example.com -p JOBUUID=12345 | oc create -f -
 ```
 
 or using 'oc new-app' respectively.
@@ -235,7 +235,7 @@ Or use the following command line:
   * hostname myhttpd.example.com
 
 ```shell
-oc new-app routecreation-request-template -p TOOL_NAMESPACE=certificate-tool -p SERVICENAME=httpd -p PORT=8080 -p ROUTENAME=myhttp -p ROUTETYPE=edge -p TARGET_NAMESPACE=example-ns -p HOSTNAME=myhttpd.example.com
+oc new-app routecreation-request-template -p TOOL_NAMESPACE=certificate-tool -p SERVICENAME=httpd -p PORT=8080 -p ROUTENAME=myhttp -p ROUTETYPE=edge -p TARGET_NAMESPACE=example-ns -p FQDN=myhttpd.example.com
 ```
 
 

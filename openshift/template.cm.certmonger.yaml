@@ -35,7 +35,7 @@ objects:
     targetNamespace: ${TARGET_NAMESPACE}
     serviceName: ${SERVICENAME}
     routeName: ${ROUTENAME}
-    hostname: ${HOSTNAME}
+    fqdn: ${FQDN}
     port: ${PORT}
     routeType: ${ROUTETYPE}
     reencSecretName: ${REENC_CA_SECRET}
@@ -50,7 +50,7 @@ parameters:
 - name: ROUTENAME
   description: The name of the route object to be created.
   required: true
-- name: HOSTNAME
+- name: FQDN
   description: The FQDN of the route to be created. Ensure the length adheres to OpenShift / DNS conventions, i.e., max length 63 characters.
   required: true
 - name: PORT

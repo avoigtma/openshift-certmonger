@@ -47,7 +47,7 @@ objects:
               export ROUTETYPE=${ROUTETYPE}
               export REENC_CA_SECRET=${REENC_CA_SECRET}
               export TARGET_NAMESPACE=${TARGET_NAMESPACE}
-              export HOSTNAME=${HOSTNAME}
+              export FQDN=${FQDN}
               export PORT=${PORT}
               export JOB=certmonger-${JOBUUID}
               export TOOL_NAMESPACE=${TOOL_NAMESPACE}
@@ -80,7 +80,7 @@ parameters:
 - name: ROUTENAME
   description: The name of the route object to be created.
   required: true
-- name: HOSTNAME
+- name: FQDN
   description: The FQDN of the route to be created. Ensure the length adheres to OpenShift / DNS conventions, i.e., max length 63 characters.
   required: true
 - name: PORT

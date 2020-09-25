@@ -9,7 +9,7 @@ echo "Executing certificate request"
 
 #
 # The following environment variables are set from the pod executing this script snippet:
-# $HOSTNAME
+# $FQDN
 # $ROUTENAME
 # $ROUTETYPE
 # $SERVICENAME
@@ -26,7 +26,8 @@ update-ca-trust
 getcert add-scep-ca -c MY-SCEP-CA -u https://scep.pki.url.example.com/my/scep/pki/uri/xyz
 sleep 16
 # retrieve the certificate via SCEP
-getcert request -I ${HOSTNAME} -c MY-SCEP-CA -N "CN=${HOSTNAME},OU=MyOrgUnitName,O=MyOrgName" -L $PKIPASSPHRASE -w -v -f /tmp/cert.crt -k /tmp/cert.key
+# Do not use strings with whitespaces for CN, OU or O
+getcert request -I ${FQDN} -c MY-SCEP-CA -N "CN=${FQDN},OU=MyOrgUnitName,O=MyOrgName" -L $PKIPASSPHRASE -w -v -f /tmp/cert.crt -k /tmp/cert.key
 sleep 8
 #
 echo "Certificate request completed"
@@ -40,6 +41,6 @@ CERTFILE=/tmp/cert.crt
 KEYFILE=/tmp/cert.key
 echo "Creating route in namespace $TARGET_NAMESPACE"
 oc create cm -n $TARGET_NAMESPACE route-$ROUTENAME-certs --from-file=cert.cer=$CERTFILE --from-file=cert.key=$KEYFILE
-oc create route $ROUTETYPE $ROUTENAME -n $TARGET_NAMESPACE --service=$SERVICENAME --cert=$CERTFILE --key=$KEYFILE --hostname=$HOSTNAME --port=$PORT
+oc create route $ROUTETYPE $ROUTENAME -n $TARGET_NAMESPACE --service=$SERVICENAME --cert=$CERTFILE --key=$KEYFILE --hostname=$FQDN --port=$PORT
 echo "Route created"
 #

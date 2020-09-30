@@ -6,6 +6,6 @@ metadata:
 roleRef:
   name: cluster-admin
 subjects:
-- kind: ServiceAccount
-  name: certmonger-job-sa
-  namespace: certificate-tool
+  - kind: ServiceAccount
+    name: certmonger-job-sa
+    namespace: certificate-tool

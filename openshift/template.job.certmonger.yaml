@@ -15,86 +15,86 @@ metadata:
   name: job-routecreation-template
   namespace: certificate-tool
 objects:
-- apiVersion: batch/v1
-  kind: Job
-  metadata:
-    name: certmonger-${JOBUUID}
-  spec:
-    parallelism: 1
-    completions: 1
-    activeDeadlineSeconds: 300
-    backoffLimit: 0
-    template:
-      metadata:
-        name: certmonger-${JOBUUID}
-      spec:
-        containers:
-        - name: certmonger
-          image: image-registry.openshift-image-registry.svc:5000/${TOOL_NAMESPACE}/certmonger:latest
-          env:
-            - name: PKIPASSPHRASE
-              valueFrom:
-                secretKeyRef:
-                  key: passphrase
-                  name: pki-secret
-          command:
-            - /bin/bash
-            - -c
-            - |
-              #!/bin/bash
-              export SERVICENAME=${SERVICENAME}
-              export ROUTENAME=${ROUTENAME}
-              export ROUTETYPE=${ROUTETYPE}
-              export REENC_CA_SECRET=${REENC_CA_SECRET}
-              export TARGET_NAMESPACE=${TARGET_NAMESPACE}
-              export FQDN=${FQDN}
-              export PORT=${PORT}
-              export JOB=certmonger-${JOBUUID}
-              export TOOL_NAMESPACE=${TOOL_NAMESPACE}
-              . /tools/cm/runJob.sh
-          volumeMounts:
-          - mountPath: /tools/ca
-            name: ca
-            readOnly: true
-          - mountPath: /tools/cm
-            name: script
-            readOnly: true
-        restartPolicy: OnFailure
-        serviceAccount: certmonger-job-sa
-        securityContext:
-          runAsUser: 0
-        volumes:
-        - name: ca
-          secret:
-            secretName: ca-secret
-        - name: script
-          configMap:
-            name: route-creation-script
+  - apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: 'certmonger-${JOBUUID}'
+    spec:
+      activeDeadlineSeconds: 300
+      backoffLimit: 0
+      completions: 1
+      parallelism: 1
+      template:
+        metadata:
+          name: 'certmonger-${JOBUUID}'
+        spec:
+          containers:
+            - command:
+                - /bin/bash
+                - '-c'
+                - |
+                  #!/bin/bash
+                  export SERVICENAME=${SERVICENAME}
+                  export ROUTENAME=${ROUTENAME}
+                  export ROUTETYPE=${ROUTETYPE}
+                  export REENC_CA_SECRET=${REENC_CA_SECRET}
+                  export TARGET_NAMESPACE=${TARGET_NAMESPACE}
+                  export FQDN=${FQDN}
+                  export PORT=${PORT}
+                  export JOB=certmonger-${JOBUUID}
+                  export TOOL_NAMESPACE=${TOOL_NAMESPACE}
+                  . /tools/cm/runJob.sh
+              env:
+                - name: PKIPASSPHRASE
+                  valueFrom:
+                    secretKeyRef:
+                      key: passphrase
+                      name: pki-secret
+              image: 'image-registry.openshift-image-registry.svc:5000/${TOOL_NAMESPACE}/certmonger:latest'
+              name: certmonger
+              volumeMounts:
+                - mountPath: /tools/ca
+                  name: ca
+                  readOnly: true
+                - mountPath: /tools/cm
+                  name: script
+                  readOnly: true
+          restartPolicy: OnFailure
+          securityContext:
+            runAsUser: 0
+          serviceAccount: certmonger-job-sa
+          volumes:
+            - name: ca
+              secret:
+                secretName: ca-secret
+            - configMap:
+                name: route-creation-script
+              name: script
 parameters:
-- name: TARGET_NAMESPACE
-  description: The namespace name where the route is being created.
-  required: true
-- name: SERVICENAME
-  description: The name of the service object exposed by the route. This service already exists in the target namespace.
-  required: true
-- name: ROUTENAME
-  description: The name of the route object to be created.
-  required: true
-- name: FQDN
-  description: The FQDN of the route to be created. Ensure the length adheres to OpenShift / DNS conventions, i.e., max length 63 characters.
-  required: true
-- name: PORT
-  description: The port number of the inbound port of the service to which the route is pointing to.
-  required: true
-- name: ROUTETYPE
-  description: The type of the route to be created. Use either 'edge' or 'passthru'.
-  required: true
-  value: edge
-- name: REENC_CA_SECRET
-  description: The name of a secret in the target namespace which must contain a certificate for reencrypting traffic. Optional - must only be provided if ROUTETYPE='reencrypt'.
-- name: TOOL_NAMESPACE
-  description: The namespace of where the route creation tool is running. Change only if you are sure the tool is deployed in a specific different namespace.
-  value: certificate-tool
-- name: JOBUUID
-  description: The id for the job (matching the request uuid) performing the certificate request.
-  required: true
+  - description: The namespace name where the route is being created.
+    name: TARGET_NAMESPACE
+    required: true
+  - description: The name of the service object exposed by the route. This service already exists in the target namespace.
+    name: SERVICENAME
+    required: true
+  - description: The name of the route object to be created.
+    name: ROUTENAME
+    required: true
+  - description: 'The FQDN of the route to be created. Ensure the length adheres to OpenShift / DNS conventions, i.e., max length 63 characters.'
+    name: FQDN
+    required: true
+  - description: The port number of the inbound port of the service to which the route is pointing to.
+    name: PORT
+    required: true
+  - description: The type of the route to be created. Use either 'edge' or 'passthru'.
+    name: ROUTETYPE
+    required: true
+    value: edge
+  - description: The name of a secret in the target namespace which must contain a certificate for reencrypting traffic. Optional - must only be provided if ROUTETYPE='reencrypt'.
+    name: REENC_CA_SECRET
+  - description: The namespace of where the route creation tool is running. Change only if you are sure the tool is deployed in a specific different namespace.
+    name: TOOL_NAMESPACE
+    value: certificate-tool
+  - description: The id for the job (matching the request uuid) performing the certificate request.
+    name: JOBUUID
+    required: true

@@ -1,11 +1,9 @@
----
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: certificate-tool
   annotations:
-    openshift.io/node-selector: ""
+    openshift.io/node-selector: ''
   labels:
-    openshift.io/cluster-logging: "true"
-    openshift.io/cluster-monitoring: "true"
-...
+    openshift.io/cluster-logging: 'true'
+    openshift.io/cluster-monitoring: 'true'
+  name: certificate-tool

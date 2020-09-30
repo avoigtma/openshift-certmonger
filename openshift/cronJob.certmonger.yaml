@@ -4,32 +4,31 @@ metadata:
   name: process-certrequests
   namespace: certificate-tool
 spec:
-  successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1
-  schedule: "*/2 * * * *"
   jobTemplate:
     spec:
       template:
         spec:
           containers:
-          - name: certmonger
-            image: image-registry.openshift-image-registry.svc:5000/certificate-tool/certmonger:latest
-            volumeMounts:
-              - mountPath: /tools/cm
-                name: script
-                readOnly: true
-            command:
-              - /bin/bash
-              - -c
-              - |
-                #/bin/bash
-                . /tools/cm/cronProcess.sh
+            - command:
+                - /bin/bash
+                - '-c'
+                - |
+                  #/bin/bash
+                  . /tools/cm/cronProcess.sh
+              image: 'image-registry.openshift-image-registry.svc:5000/certificate-tool/certmonger:latest'
+              name: certmonger
+              volumeMounts:
+                - mountPath: /tools/cm
+                  name: script
+                  readOnly: true
           restartPolicy: OnFailure
-          serviceAccountName: certmonger-job-sa
           securityContext:
             runAsUser: 0
+          serviceAccountName: certmonger-job-sa
           volumes:
-          - name: script
-            configMap:
-              name: cronjob-process-script
-
+            - configMap:
+                name: cronjob-process-script
+              name: script
+  schedule: '*/2 * * * *'
+  successfulJobsHistoryLimit: 3

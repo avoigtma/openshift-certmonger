@@ -9,29 +9,29 @@ spec:
   output:
     to:
       kind: ImageStreamTag
-      name: certmonger:latest
+      name: 'certmonger:latest'
       namespace: certificate-tool
   postCommit: {}
   resources: {}
   runPolicy: Serial
   source:
-    git:
-      uri: https://github.com/avoigtma/openshift-certmonger.git
     contextDir: docker
+    git:
+      uri: 'https://github.com/avoigtma/openshift-certmonger.git'
   strategy:
-    type: Docker
     dockerStrategy:
       dockerfilePath: Dockerfile-ose-cli-certmonger.docker
       from:
         kind: ImageStreamTag
-        name: centos:latest
+        name: 'centos:latest'
         namespace: openshift
       noCache: true
+    type: Docker
   triggers:
-  - type: ImageChange
-    imageChange:
-      from:
-        kind: "ImageStreamTag"
-        name: centos:latest
-        namespace: openshift
-  - type: ConfigChange
+    - imageChange:
+        from:
+          kind: ImageStreamTag
+          name: 'centos:latest'
+          namespace: openshift
+      type: ImageChange
+    - type: ConfigChange

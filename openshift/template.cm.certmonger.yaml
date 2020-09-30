@@ -15,68 +15,68 @@ metadata:
   name: routecreation-request-template
   namespace: openshift
 objects:
-- apiVersion: v1
-  kind: ConfigMap
-  metadata:
-    name: route-task-${CMTOOLSUUID}
-    namespace: ${TOOL_NAMESPACE}
-  data:
-    toolNamespace: ${TOOL_NAMESPACE}
-    targetNamespace: ${TARGET_NAMESPACE}
-    taskuuid: ${TASKUUID}
-    appcmname: route-task-${CMAPPUUID}
-- apiVersion: v1
-  kind: ConfigMap
-  metadata:
-    name: route-task-${CMAPPUUID}
-    namespace: ${TARGET_NAMESPACE}
-  data:
-    toolNamespace: ${TOOL_NAMESPACE}
-    targetNamespace: ${TARGET_NAMESPACE}
-    serviceName: ${SERVICENAME}
-    routeIdentifier: ${ROUTE_IDENTIFIER}
-    fqdn: ${FQDN}
-    port: ${PORT}
-    routeType: ${ROUTETYPE}
-    reencSecretName: ${REENC_CA_SECRET}
-    taskuuid: ${TASKUUID}
+  - apiVersion: v1
+    data:
+      appcmname: 'route-task-${CMAPPUUID}'
+      targetNamespace: '${TARGET_NAMESPACE}'
+      taskuuid: '${TASKUUID}'
+      toolNamespace: '${TOOL_NAMESPACE}'
+    kind: ConfigMap
+    metadata:
+      name: 'route-task-${CMTOOLSUUID}'
+      namespace: '${TOOL_NAMESPACE}'
+  - apiVersion: v1
+    data:
+      fqdn: '${FQDN}'
+      port: '${PORT}'
+      reencSecretName: '${REENC_CA_SECRET}'
+      routeIdentifier: '${ROUTE_IDENTIFIER}'
+      routeType: '${ROUTETYPE}'
+      serviceName: '${SERVICENAME}'
+      targetNamespace: '${TARGET_NAMESPACE}'
+      taskuuid: '${TASKUUID}'
+      toolNamespace: '${TOOL_NAMESPACE}'
+    kind: ConfigMap
+    metadata:
+      name: 'route-task-${CMAPPUUID}'
+      namespace: '${TARGET_NAMESPACE}'
 parameters:
-- name: TARGET_NAMESPACE
-  description: The namespace name where the route is being created.
-  required: true
-- name: SERVICENAME
-  description: The name of the service object exposed by the route. This service already exists in the target namespace.
-  required: true
-- name: ROUTE_IDENTIFIER
-  description: The identifying name of the route object to be created.
-  required: true
-- name: FQDN
-  description: The FQDN of the route to be created. Ensure the length adheres to OpenShift / DNS conventions, i.e., max length 63 characters.
-  required: true
-- name: PORT
-  description: The port number of the inbound port of the service to which the route is pointing to.
-  required: true
-- name: ROUTETYPE
-  description: The type of the route to be created. Use either 'edge', 'passthrough' or 'reencrypt'.
-  required: true
-  value: edge
-- name: REENC_CA_SECRET
-  description: The name of a secret in the target namespace which must contain a certificate for reencrypting traffic. Optional - must only be provided if ROUTETYPE='reencrypt'.
-- name: TOOL_NAMESPACE
-  description: The namespace of where the route creation tool is running. Change only if you are sure the tool is deployed in a specific different namespace.
-  value: certificate-tool
-- name: CMTOOLSUUID
-  displayName: do-not-fill-in-will-be-generated-cmtoolsuuid
-  description: uuid parameter for CM in tools namespace
-  from: "[a-z0-9]{8}"
-  generate: "expression"
-- name: CMAPPUUID
-  displayName: do-not-fill-in-will-be-generated-cmappuuid
-  description: uuid parameter for CM in application namespace
-  from: "[a-z0-9]{8}"
-  generate: "expression"
-- name: TASKUUID
-  displayName: do-not-fill-in-will-be-generated-taskuuid
-  description: uuid parameter for aligning tools and application namespace
-  from: "[a-z0-9]{16}"
-  generate: "expression"
+  - description: The namespace name where the route is being created.
+    name: TARGET_NAMESPACE
+    required: true
+  - description: The name of the service object exposed by the route. This service already exists in the target namespace.
+    name: SERVICENAME
+    required: true
+  - description: The name (identifier) of the route object to be created.
+    name: ROUTE_IDENTIFIER
+    required: true
+  - description: 'The FQDN of the route to be created. Ensure the length adheres to OpenShift / DNS conventions, i.e., max length 63 characters.'
+    name: FQDN
+    required: true
+  - description: The port number of the inbound port of the service to which the route is pointing to.
+    name: PORT
+    required: true
+  - description: 'The type of the route to be created. Use either ''edge'', ''passthrough'' or ''reencrypt''.'
+    name: ROUTETYPE
+    required: true
+    value: edge
+  - description: The name of a secret in the target namespace which must contain a certificate for reencrypting traffic. Optional - must only be provided if ROUTETYPE='reencrypt'.
+    name: REENC_CA_SECRET
+  - description: The namespace of where the route creation tool is running. Change only if you are sure the tool is deployed in a specific different namespace.
+    name: TOOL_NAMESPACE
+    value: certificate-tool
+  - description: uuid parameter for CM in tools namespace
+    displayName: do-not-fill-in-will-be-generated-cmtoolsuuid
+    from: '[a-z0-9]{8}'
+    generate: expression
+    name: CMTOOLSUUID
+  - description: uuid parameter for CM in application namespace
+    displayName: do-not-fill-in-will-be-generated-cmappuuid
+    from: '[a-z0-9]{8}'
+    generate: expression
+    name: CMAPPUUID
+  - description: uuid parameter for aligning tools and application namespace
+    displayName: do-not-fill-in-will-be-generated-taskuuid
+    from: '[a-z0-9]{16}'
+    generate: expression
+    name: TASKUUID

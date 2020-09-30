@@ -1,5 +1,4 @@
 #!/bin/bash
-echo "Executing certificate request"
 #
 # The following environment variables are set from the pod executing this script snippet:
 # $FQDN
@@ -20,6 +19,8 @@ echo >$MSGFILE
 echo >$ERRFILE
 #
 # BEGIN CERTIFICATE REQUEST
+#
+echo "Executing certificate request"
 #
 # replace the commands for 'certmonger' in this section with suitable commands for accessing the PKI
 # demo only using self-signed certificate; as for selfsigned certs there is no CA, we create a dummy ca.cer file

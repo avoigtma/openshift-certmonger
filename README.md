@@ -1,37 +1,19 @@
 # OCP Route Creation with TLS Certificates derived from a PKI using SCEP
 
-This document describes an approach how to create Route objects in OpenShift which use custom certificates. The certificates are obtained from a PKI using SCEP API. We use the 'certmonger' tool running in a Pod on OpenShift to request the certificates from the PKI using SCEP protocol. The pod afterwards creates a Route object in a target namespace having the requested certificated configured.
-
-> Open items:
-> 
-> * update of the certificates (as of now, need to delete and re-create the route)
-> * replace template-based approach using an Operator
-> * custom role for executing the job (instead of cluster-admin)
-> * ...
-
-## Repository Link
-Base repository link for all artefacts referenced in the following description: <https://github.com/avoigtma/openshift-certmonger>
-
-> In the remainder of the documents, all commands are executed in the 'certmonger-job' repository directory of the source repository.
+This document describes an approach on how to create Route objects in OpenShift which use custom certificates. We use the `certmonger` tool running in a Pod on OpenShift to request the certificates from the PKI using SCEP protocol. The pod afterwards creates a Route object in a target Namespace having the requested certificated configured.
 
 ## Overview
 
 The approach to execute the retrieval of certificates and creation of resulting OpenShift Routes is as follows:
 
-* The tool as described in the following is installed in a defined namespace, the latter owned by the platform owner team, as the tool requires to be executed with cluster-admin permissions.
-* An arbitrary user (i.e. the owner of an application deployed in some namespace in OpenShift) can request the creation of a route in his namespace which obtains a custom certificate.
+* The tool is installed in a  Namespace, which is owned by the platform owner team, as the tool requires to be executed with `cluster-admin` permissions.
+* An arbitrary user (i.e. the owner of an application deployed in some Namespace in OpenShift) requests the creation of a Route in his Namespace which should obtain a custom certificate.
 * Steps
-  * Application user uses a template deployed globally in 'openshift' namespace to generate a request.
-    * This request is represented by a ConfigMap in the tools namespace and a corresponding ConfigMap within the application namespace.
-      * Internal data within these ConfigMaps link both.
-    * A CronJob in the tools namespace regularly runs
-      * checks for new requests (i.e. ConfigMaps) being created within the tools namespace
-      * reads these ConfigMaps and for each such Config Map
-        * reads the data from the corresponding ConfigMap from application namespace
-        * triggers creation of a Job within the tools namespace
-          * this Job (asynchronously from the Job run by the CronJob) interacts with the PKI (using 'certmonger') to obtain the TLS certificate
-          * creates the custom route in the application namespace
-      * removes the task object (ConfigMap)
+  * The owner of an application uses a template deployed globally in `openshift` Namespace to generate a request.
+  * This request is represented by a ConfigMap in the tools Namespace and a corresponding ConfigMap within the application Namespace. Data within these ConfigMaps link to each other.
+  * A CronJob in the tools Namespace regularly runs and checks for new requests (i.e. ConfigMaps) being created within the tools Namespace
+  * Both ConfigMaps are read and the creation of a Job within the tools Namespace is triggered
+  * This Job (asynchronously from the Job run by the CronJob) interacts with the PKI (using `certmonger`) to obtain the TLS certificate and reates the custom Route in the application Namespace. Then it removes the task object (ConfigMap)
 
 ## Deployment
 
@@ -39,15 +21,9 @@ Run the steps described in the next sections for deployment.
 
 ### Create Namespace
 
-Create a namespace for hosting the 'certmonger' tool.
+Create a Namespace for hosting the `certmonger` tool.
 
-We use a namespace called 'certificate-tool' which may host any kind of operation-support tools for the platform. But any other namespace can be used as well. Please note you need to adjust the Yaml files respectively.
-
-```shell
-oc new-project certificate-tool
-```
-
-or use
+A Namespace called `certificate-tool` is used which may host any kind of operation-support tools for the platform. But any other namespace can be used as well. In this case adjust the YAML files respectively.
 
 ```shell
 oc create -f openshift/namespace.certTool.yaml
@@ -55,7 +31,7 @@ oc create -f openshift/namespace.certTool.yaml
 
 ## Load Templates
 
-We need to load the template to create to the requests into the public 'openshift' namespace. The template for the 'certmonger job' is loaded within the tools namespace ('certificate-tool').
+Load the template to create to the requests into the public `openshift` Namespace. The template for the `certmonger job` is loaded within the tools Namespace (`certificate-tool`).
 
 ```shell
 oc create -f openshift/template.cm.certmonger.yaml
@@ -64,9 +40,7 @@ oc create -f openshift/template.job.certmonger.yaml
 
 ## Custom Role
 
-In order to allow creation of the requests by any user, we establish a custom role within the tool namespace. That role (and role mapping) will allow any authenticated user to create a ConfigMap for a certificate request using the template within the tools namespace.
-
-> Note: The role will allow any user to create other ConfigMaps as well, but only create, not list (determine) and not get their content.
+In order to allow creation of the requests by any user, we establish a custom Role within the tool Namespace. That Role (and role mapping) will allow any authenticated user to only create a ConfigMap for a certificate request using the template within the tools Namespace.
 
 ```shell
 oc create -f openshift/role.certmonger.yaml
@@ -75,7 +49,7 @@ oc create -f openshift/rolebinding.certmongerRole.yaml
 
 ### Import Base Image
 
-Run the following as cluster admin, as we want to import into openshift namespace.
+Run the following as `cluster-admin`, to import into `openshift` Namespace.
 
 ```shell
 oc import-image centos --from=registry.centos.org/centos:centos8 -n openshift --confirm
@@ -83,50 +57,40 @@ oc import-image centos --from=registry.centos.org/centos:centos8 -n openshift --
 
 ### Build Dockerfile
 
-We create our own tool image from a Dockerfile. The image includes both 'certmonger' and the 'oc' client.
-
-#### Create new build (and target image stream)
-
-> Note: we create a new build config using 'oc new-build', delete the bc afterwards and (re-)create our own build config. This is just a simple 'workaround-style' approach to create the imagestream required as the target of the build :-)
+Build the container image from a Dockerfile. The image includes both `certmonger` and the `oc` client.
 
 ```shell
 oc create -f openshift/is.certmonger.yaml
 oc create -f openshift/buildcfg.certmongerDocker.yaml
 ```
 
-#### Start the build
-
-In case the creation of the BuildConfig object did not already start a build, or in case you need to start a new build once changing the Dockerfile, do it as follows:
+In case the creation of the BuildConfig object did not already start a build, or in case the Dockerfile changed, run:
 
 ```shell
 oc start-build certmonger
 ```
 
-### Create Service Account
+### Create ServiceAccount
 
-We create a Service Account to run the Job Pod for route creation.
+Create a ServiceAccount to run the Job Pod for Route creation.
 
 ```shell
 oc create -f openshift/sa.certMongerJob.yaml
 ```
 
-### Create Role Binding for Service Account
+### Create Role Binding for ServiceAccount
 
-The Service Account needs to get a role binding to obtain the required permissions.
-
-Import the yaml using 
+The ServiceAccount needs to get a RoleBinding to obtain the required permissions.
 
 ```shell
 oc create -f openshift/crb.certmongerJob.yaml
 ```
 
-> Note: For simplicity, we use the 'ClusterAdmin' role. It would be a better solution to create a custom role definition having only the required permissions for the Service Account. However, as the pruning jobs anyway run in a namespace owned by a platform team and thus 'ClusterAdmin' enabled users, using 'cluster-admin' role is acceptable.
->
-> TODO: use a separate role which only has cluster-wide access to Routes and other required artefacts in the application namespaces.
+> For simplicity the `cluster-admin` Role is used. It would be a better solution to create a custom Role definition having only the required permissions for the ServiceAccount. However, as the pruning Jobs anyway run in a Namespace owned by a platform team and thus `cluster-admin` enabled users, using `cluster-admin` Role is acceptable.
 
 ### Add SCC
 
-The job needs to run with a fixed user id, hence add the service account to 'anyuid' SCC.
+The job needs to run with a fixed user id, hence add the ServiceAccount to `anyuid` SCC.
 
 ```shell
 oc adm policy add-scc-to-user anyuid -z certmonger-job-sa -n certificate-tool
@@ -138,16 +102,15 @@ oc adm policy add-scc-to-user anyuid -z certmonger-job-sa -n certificate-tool
 
 ##### Secrets holding Corporate Root CA
 
-Unless the example for self-signed certificates is used, the Job requesting the certificate requires to have 
-the corporate root CA (public key part) to be part of the container's trust store.
+Unless the example for self-signed certificates is used, the Job requesting the certificate requires to have the corporate root CA (public key part) to be part of the container's trust store.
 
-We use a Secret to hold the root CA and mount this Secret into the Job pod.
+A Secret is used to hold the root CA which is mounted to the Job Pod.
 
 ```shell
 oc create secret generic ca-secret --from-file=ca.crt=/path/to/ca.crt
 ```
 
-When using the self-signed example simply create a secret with a dummy value, as the secret is not used, for example:
+When using the self-signed example simply create a Secret with a dummy value, as the Secret is not used:
 
 ```shell
 oc create secret generic ca-secret --from-literal=ca.crt=dummy
@@ -155,7 +118,7 @@ oc create secret generic ca-secret --from-literal=ca.crt=dummy
 
 ##### Secret for PKI access
 
-When accessing the PKI using SCEP protocol, a passphrase must be provided. This passphrase is managed in a secret which is loaded into the certmonger pod interacting with the PKI using SCEP.
+When accessing the PKI using SCEP protocol, a passphrase must be provided. This passphrase is managed in a Secret which is loaded into the `certmonger` Pod interacting with the PKI using SCEP.
 
 ```shell
 oc create secret generic pki-secret --from-literal=passphrase=supersecret
@@ -164,18 +127,18 @@ oc create secret generic pki-secret --from-literal=passphrase=supersecret
 
 ##### ConfigMaps holding scripts
 
-We use a ConfigMap to hold the script code executed by the Job and the CronJob.
+A ConfigMap is used to hold the script code executed by the Job and the CronJob.
 
-* Use CertMonger to request a certificate from the PKI.
-* Use 'oc' to create the route object.
+* Use `certmonger` to request a certificate from the PKI.
+* Use `oc` to create the route object.
 
-> Note: *noproxy settings*
+> *noproxy settings*
 >
-> The scripts - depending on environment - may need 'noproxy' settings for successful communication to OpenShift API Server or PKI. Please adjust the 'noproxy' settings in the script accordingly.
+> The scripts - depending on environment - may need `noproxy` settings for successful communication to OpenShift API Server or PKI. Please adjust the `noproxy` settings in the script accordingly.
 
-> Note: *Using PKI instead of selfsigned certificates.*
+> *Using PKI instead of selfsigned certificates.*
 >
-> The 'runJob.sh' script is creating self-signed certificates and acts as an example which can run in any OpenShift environment, irrespective of a specific PKI/SCEP server being used. The 'podscripts' directory contains an alternate 'runJob_scep-example.sh' script which provides the example of accessing a SCEP server.
+> The `runJob.sh` script is creating self-signed certificates and acts as an example which can run in any OpenShift environment, irrespective of a specific PKI/SCEP server being used. The `podscripts` directory contains an alternate `runJob_scep-example.sh` script which provides the example of accessing a SCEP server.
 
 ```shell
 oc create cm route-creation-script --from-file=runJob.sh=./podscripts/runJob.sh
@@ -184,73 +147,61 @@ oc create cm cronjob-process-script --from-file=cronProcess.sh=./podscripts/cron
 
 #### Create CronJob
 
-Create the CronJob to monitor the created requests and execute the certificate/route creation jobs.
-
-> Please adjust the schedule of the CronJob. Example runs every 2 minutes.
+Create the CronJob to monitor the created requests and execute the Route creation jobs.
 
 ```shell
 oc create -f openshift/cronJob.certmonger.yaml
 ```
 
-#### (optional/debug) Instantiate Job using template
+# Usage
 
-The provided template runs a Job which
+## Enable User to request Certificates
 
-* accesses the PKI using 'certmonger' tool to retrieve a certificate
-* creates a route using the certificate in a target namespace
-
-See the template definition for the mandatory and optional parameters.
-
-Sample execution:
+Add the user to the Role in the tools Namespace:
 
 ```shell
-oc process -f openshift/template.job.certmonger.yaml -p TOOL_NAMESPACE=certificate-tool -p SERVICENAME=httpd-example -p PORT=8080 -p ROUTENAME=myhttp -p ROUTETYPE=edge -p TARGET_NAMESPACE=example-ns -p FQDN=bla.example.com -p JOBUUID=12345 | oc create -f -
+oc adm policy add-role-to-user job-initiator-role <username> --role-namespace=certificate-tool -n certificate-tool
 ```
 
-or using 'oc new-app' respectively.
-You however will not have to run this manually, as the CronJob processing the requests will take over this task to instantiate the required Job for processing the request.
-
-# Usage by Application
-
-## Allow user to use 
-
-Add the user 'exampleusername' to the role in tool namespace:
+## CLI
 
 ```shell
-oc adm policy add-role-to-user job-initiator-role exampleusername --role-namespace=certificate-tool -n certificate-tool
+oc new-app routecreation-request-template \
+  -p TOOL_NAMESPACE=certificate-tool \
+  -p SERVICENAME=<SERVICENAME> \
+  -p PORT=<PORT> \
+  -p ROUTENAME=<ROUTENAME> \
+  -p ROUTETYPE=<ROUTETYPE> \
+  -p TARGET_NAMESPACE=<TARGET_NAMESPACE> \
+  -p FQDN=<FQDN>
 ```
 
-## Usage
+Change the parameters to your needs. Then wait up to two minutes until the request is processed by the CronJob.
 
-Use the WebUI "Developer Perspective >> Add >> From Catalog", filter on "Other" and "Template" and choose the template 'Route Creation Request Template'.
+## UI
 
-Fill in the parameters as described.
+Authenticate at the console of the corresponding cluster. Then navigate through the following pages:
 
-Or use the following command line:
-* example given for a Http Server
-  * in namespace 'example-ns'
-  * service name 'httpd'
-  * and port '8080'
-* route and certificate to be created for
-  * hostname myhttpd.example.com
+* Developer View
+* Click on `+ Add`
+* Chosse `From Catalog`
+* Filter on `Other` and `Template`
+* Choose `Route Creation Request Template`
 
-```shell
-oc new-app routecreation-request-template -p TOOL_NAMESPACE=certificate-tool -p SERVICENAME=httpd -p PORT=8080 -p ROUTENAME=myhttp -p ROUTETYPE=edge -p TARGET_NAMESPACE=example-ns -p FQDN=myhttpd.example.com
-```
-
+Fill in the parameters as described. Then wait up to two minutes until the request is processed by the CronJob.
 
 # Technical Information
 
-* Custom role to allow creation of ConfigMap in namespace where certmonger job runs
+* Custom Role to allow creation of ConfigMap in Namespace where `certmonger` job runs
     * Name pattern: route-task-uuid
-    * namespace: Certmonger-NS
-        * contents: the target namespace and a uuid
-    * namespace: target-NS
-        * parameters for the route creation as key-value pairs
-* CronJob to processs route creation according to discovered ConfigMaps of above name pattern
-    * process the certificate and route creation
-    * remove config map afterwards
+    * Namespace: certmonger Namespace
+        * contents: the target Namespace and a uuid
+    * Namespace: target Namespace
+        * parameters for the Route creation as key-value pairs
+* CronJob to processs Route creation according to discovered ConfigMaps of above name pattern
+    * process the certificate and Route creation
+    * remove ConfigMap afterwards
 * Error handling
-    * if the certmonger job pod fails, there is a config map called 'certmonger-XYZ-status' (XYZ the JobUUID of the CertMonger Job) in the certificate-tool namespace; this config map is created only in case of failure, not in case of success
+    * if the `certmonger` job pod fails, there is a ConfigMap called `certmonger-<job_uuid>-status` in the certificate-tool Namespace; this ConfigMap is created only in case of failure, not in case of success
 * Certificates
-    * The created certificates are placed in a secret in the application target namespace. The secret is called 'route-ABC-certs' (ABC = name of the route being created)
+    * The created certificates are placed in a Secret in the application target Namespace. The Secret is called `route-<name_of_route>-certs`

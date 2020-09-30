@@ -34,7 +34,7 @@ objects:
     toolNamespace: ${TOOL_NAMESPACE}
     targetNamespace: ${TARGET_NAMESPACE}
     serviceName: ${SERVICENAME}
-    routeName: ${ROUTENAME}
+    routeIdentifier: ${ROUTE_IDENTIFIER}
     fqdn: ${FQDN}
     port: ${PORT}
     routeType: ${ROUTETYPE}
@@ -47,8 +47,8 @@ parameters:
 - name: SERVICENAME
   description: The name of the service object exposed by the route. This service already exists in the target namespace.
   required: true
-- name: ROUTENAME
-  description: The name of the route object to be created.
+- name: ROUTE_IDENTIFIER
+  description: The identifying name of the route object to be created.
   required: true
 - name: FQDN
   description: The FQDN of the route to be created. Ensure the length adheres to OpenShift / DNS conventions, i.e., max length 63 characters.

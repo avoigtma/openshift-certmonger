@@ -3,42 +3,61 @@ echo "Executing certificate request"
 #
 # The following environment variables are set from the pod executing this script snippet:
 # $FQDN
-# $ROUTENAME
+# $ROUTE_IDENTIFIER
 # $ROUTETYPE
 # $SERVICENAME
 # $PORT
 # $TARGET_NAMESPACE
+#
+CAFILE=/tmp/ca.crt
+CERTFILE=/tmp/cert.crt
+KEYFILE=/tmp/cert.key
+DESTCAFILE=/tmp/reenc-ca.crt
+MSGFILE=/tmp/msg.txt
+ERRFILE=/tmp/err.txt
+ERR=""
+echo >$MSGFILE
+echo >$ERRFILE
 #
 # BEGIN CERTIFICATE REQUEST
 #
 # replace the commands for 'certmonger' in this section with suitable commands for accessing the PKI
 # demo only using self-signed certificate; as for selfsigned certs there is no CA, we create a dummy ca.cer file
 # Do not use strings with whitespaces for CN, OU or O
-selfsign-getcert request -w -f /tmp/cert.crt -k /tmp/cert.key -N "CN=$FQDN,OU=example.com,O=myorg" -D "$FQDN" -U id-kp-serverAuth
+selfsign-getcert request -w -f $CERTFILE -k $KEYFILE -N "CN=$FQDN,OU=example.com,O=myorg" -D "$FQDN" -U id-kp-serverAuth
 ls -l /tmp
-touch /tmp/ca.crt
+touch $CAFILE
 #
 echo "Certificate request completed"
+# Check if cert files were created
+if [ -f $CERTFILE ]
+then
+  echo "Certificate retrieved from PKI"
+else
+  # create cm with error information
+  ERR="No certificate retrieved from PKI"
+  echo $ERR >$ERRFILE
+  STATUS=failed
+  oc create cm -n $TOOL_NAMESPACE $JOB-status --from-literal=status=$STATUS --from-file=errtext=$ERRFILE --from-file=message=$MSGFILE
+  exit 1
+fi
+#
+#
 # END CERTIFICATE REQUEST
 #
 # Create the route object
 # in addition we save the certificates in a ConfigMap in the target namespace
-CAFILE=/tmp/ca.crt
-CERTFILE=/tmp/cert.crt
-KEYFILE=/tmp/cert.key
-DESTCAFILE=/tmp/reenc-ca.crt
-MSGFILE=/tmp/msg.txt
-ERR=""
+#
 echo "Creating route in namespace $TARGET_NAMESPACE"
 if [ $ROUTETYPE == edge ]
 then
   echo "Creating edge route"
-  oc create route $ROUTETYPE $ROUTENAME -n $TARGET_NAMESPACE --insecure-policy=Redirect --service=$SERVICENAME --cert=$CERTFILE --key=$KEYFILE --ca-cert=$CAFILE --hostname=$FQDN --port=$PORT >$MSGFILE 2>&1
+  oc create route $ROUTETYPE $ROUTE_IDENTIFIER -n $TARGET_NAMESPACE --insecure-policy=Redirect --service=$SERVICENAME --cert=$CERTFILE --key=$KEYFILE --ca-cert=$CAFILE --hostname=$FQDN --port=$PORT >$MSGFILE 2>&1
   RES=$?
 elif [ $ROUTETYPE == passthrough ]
 then
   echo "Creating passthrough route"
-  oc create route $ROUTETYPE $ROUTENAME -n $TARGET_NAMESPACE --insecure-policy=Redirect --service=$SERVICENAME  --hostname=$FQDN --port=$PORT >$MSGFILE 2>&1
+  oc create route $ROUTETYPE $ROUTE_IDENTIFIER -n $TARGET_NAMESPACE --insecure-policy=Redirect --service=$SERVICENAME  --hostname=$FQDN --port=$PORT >$MSGFILE 2>&1
   RES=$?
 elif [ $ROUTETYPE == reencrypt ]
 then
@@ -47,7 +66,7 @@ then
   RES=$?
   if [ $RES == 0 ]
   then
-    oc create route $ROUTETYPE $ROUTENAME -n $TARGET_NAMESPACE --insecure-policy=Redirect --service=$SERVICENAME --cert=$CERTFILE --key=$KEYFILE --ca-cert=$CAFILE --dest-ca-cert=$DESTCAFILE --hostname=$FQDN --port=$PORT >$MSGFILE 2>&1
+    oc create route $ROUTETYPE $ROUTE_IDENTIFIER -n $TARGET_NAMESPACE --insecure-policy=Redirect --service=$SERVICENAME --cert=$CERTFILE --key=$KEYFILE --ca-cert=$CAFILE --dest-ca-cert=$DESTCAFILE --hostname=$FQDN --port=$PORT >$MSGFILE 2>&1
     RES=$?
   else
     ERR="$ROUTETYPE route: cannot get reencrypt cert $REENC_CA_SECRET in namespace $TARGET_NAMESPACE"
@@ -56,17 +75,27 @@ then
 else
   ERR="unsupported route type $ROUTETYPE"
   echo $ERR
-  RES=$?
+  RES=2
 fi
 #
 if [ $RES == 0 ]
 then
-  echo "Route $ROUTETYPE $ROUTENAME created"
+  # create secret for created certificates
+  echo "Route $ROUTETYPE $ROUTE_IDENTIFIER created"
   STATUS=success
-  oc create secret generic route-$ROUTENAME-certs -n $TARGET_NAMESPACE --from-file=cert.cer=$CERTFILE --from-file=cert.key=$KEYFILE --from-file=ca.cer=$CAFILE --from-file=destca.cer=$DESTCAFILE
+  if [ -f $DESTCAFILE ]
+  then
+    # store certificate file, associated key and destination ca for reencrypt route
+    oc create secret generic route-$ROUTE_IDENTIFIER-certs -n $TARGET_NAMESPACE --from-file=cert.cer=$CERTFILE --from-file=cert.key=$KEYFILE --from-file=ca.cer=$CAFILE --from-file=destca.cer=$DESTCAFILE
+  else
+    # store certificate file, associated key and destination ca for edge or passthru route
+    oc create secret generic route-$ROUTE_IDENTIFIER-certs -n $TARGET_NAMESPACE --from-file=cert.cer=$CERTFILE --from-file=cert.key=$KEYFILE --from-file=ca.cer=$CAFILE
+  fi
 else
-  echo "Error creating route $ROUTETYPE $ROUTENAME : $ERR"
+  # create cm with error information
+  echo "Error creating route $ROUTETYPE $ROUTE_IDENTIFIER : $ERR"
+  echo $ERR >$ERRFILE
   STATUS=failed
-  oc create cm -n $TOOL_NAMESPACE $JOB-status --from-literal=status=$STATUS --from-literal=errtext=$ERR --from-file=message=$MSGFILE
+  oc create cm -n $TOOL_NAMESPACE $JOB-status --from-literal=status=$STATUS --from-file=errtext=$ERRFILE --from-file=message=$MSGFILE
 fi
 #

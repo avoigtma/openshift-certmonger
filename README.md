@@ -144,13 +144,13 @@ the corporate root CA (public key part) to be part of the container's trust stor
 We use a Secret to hold the root CA and mount this Secret into the Job pod.
 
 ```shell
-oc create secret generic ca-secret --from-file=ca.crt=/path/to/ca.crt
+oc create secret -n certificate-tool generic ca-secret --from-file=ca.crt=/path/to/ca.crt
 ```
 
 When using the self-signed example simply create a secret with a dummy value, as the secret is not used, for example:
 
 ```shell
-oc create secret generic ca-secret --from-literal=ca.crt=dummy
+oc create secret -n certificate-tool generic ca-secret --from-literal=ca.crt=dummy
 ```
 
 ##### Secret for PKI access
@@ -158,7 +158,7 @@ oc create secret generic ca-secret --from-literal=ca.crt=dummy
 When accessing the PKI using SCEP protocol, a passphrase must be provided. This passphrase is managed in a secret which is loaded into the certmonger pod interacting with the PKI using SCEP.
 
 ```shell
-oc create secret generic pki-secret --from-literal=passphrase=supersecret
+oc create secret -n certificate-tool generic pki-secret --from-literal=passphrase=supersecret
 ```
 
 
@@ -178,8 +178,8 @@ We use a ConfigMap to hold the script code executed by the Job and the CronJob.
 > The 'runJob.sh' script is creating self-signed certificates and acts as an example which can run in any OpenShift environment, irrespective of a specific PKI/SCEP server being used. The 'podscripts' directory contains an alternate 'runJob_scep-example.sh' script which provides the example of accessing a SCEP server.
 
 ```shell
-oc create cm route-creation-script --from-file=runJob.sh=./podscripts/runJob.sh
-oc create cm cronjob-process-script --from-file=cronProcess.sh=./podscripts/cronProcess.sh
+oc create cm -n certificate-tool route-creation-script --from-file=runJob.sh=./podscripts/runJob.sh
+oc create cm -n certificate-tool cronjob-process-script --from-file=cronProcess.sh=./podscripts/cronProcess.sh
 ```
 
 #### Create CronJob
@@ -204,7 +204,7 @@ See the template definition for the mandatory and optional parameters.
 Sample execution:
 
 ```shell
-oc process -f openshift/template.job.certmonger.yaml -p TOOL_NAMESPACE=certificate-tool -p SERVICENAME=httpd-example -p PORT=8080 -p ROUTENAME=myhttp -p ROUTETYPE=edge -p TARGET_NAMESPACE=example-ns -p FQDN=bla.example.com -p JOBUUID=12345 | oc create -f -
+oc process -f openshift/template.job.certmonger.yaml -p TOOL_NAMESPACE=certificate-tool -p SERVICENAME=httpd-example -p PORT=8080 -p ROUTE_IDENTIFIER=myhttp -p ROUTETYPE=edge -p TARGET_NAMESPACE=example-ns -p FQDN=bla.example.com -p JOBUUID=12345 | oc create -f -
 ```
 
 or using 'oc new-app' respectively.
@@ -235,11 +235,13 @@ Or use the following command line:
   * hostname myhttpd.example.com
 
 ```shell
-oc new-app routecreation-request-template -p TOOL_NAMESPACE=certificate-tool -p SERVICENAME=httpd -p PORT=8080 -p ROUTENAME=myhttp -p ROUTETYPE=edge -p TARGET_NAMESPACE=example-ns -p FQDN=myhttpd.example.com
+oc new-app routecreation-request-template -p TOOL_NAMESPACE=certificate-tool -p SERVICENAME=httpd -p PORT=8080 -p ROUTE_IDENTIFIER=myhttp -p ROUTETYPE=edge -p TARGET_NAMESPACE=example-ns -p FQDN=myhttpd.example.com
 ```
 
 
 # Technical Information
+
+## Overview
 
 * Custom role to allow creation of ConfigMap in namespace where certmonger job runs
     * Name pattern: route-task-uuid
@@ -250,7 +252,14 @@ oc new-app routecreation-request-template -p TOOL_NAMESPACE=certificate-tool -p 
 * CronJob to processs route creation according to discovered ConfigMaps of above name pattern
     * process the certificate and route creation
     * remove config map afterwards
-* Error handling
-    * if the certmonger job pod fails, there is a config map called 'certmonger-XYZ-status' (XYZ the JobUUID of the CertMonger Job) in the certificate-tool namespace; this config map is created only in case of failure, not in case of success
 * Certificates
     * The created certificates are placed in a secret in the application target namespace. The secret is called 'route-ABC-certs' (ABC = name of the route being created)
+
+## Error Information
+
+* Error handling
+    * if the certmonger job pod fails, there is a config map called 'certmonger-XYZ-status' (XYZ the JobUUID of the CertMonger Job) in the certificate-tool namespace; this config map is created only in case of failure, not in case of success
+	* if the task processing job fails, there is a config map called 'err-route-task-XYZ' (XYZ the UUID of the CertMonger task) in the certificate-tool namespace covering error information; this config map is created only in case of failure, not in case of success
+
+> Inspect the Yaml or JSON source of each error config map to get details about the processing errors.
+

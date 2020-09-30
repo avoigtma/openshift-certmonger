@@ -43,7 +43,7 @@ objects:
             - |
               #!/bin/bash
               export SERVICENAME=${SERVICENAME}
-              export ROUTENAME=${ROUTENAME}
+              export ROUTE_IDENTIFIER=${ROUTE_IDENTIFIER}
               export ROUTETYPE=${ROUTETYPE}
               export REENC_CA_SECRET=${REENC_CA_SECRET}
               export TARGET_NAMESPACE=${TARGET_NAMESPACE}
@@ -77,8 +77,8 @@ parameters:
 - name: SERVICENAME
   description: The name of the service object exposed by the route. This service already exists in the target namespace.
   required: true
-- name: ROUTENAME
-  description: The name of the route object to be created.
+- name: ROUTE_IDENTIFIER
+  description: The name (identifier) of the route object to be created.
   required: true
 - name: FQDN
   description: The FQDN of the route to be created. Ensure the length adheres to OpenShift / DNS conventions, i.e., max length 63 characters.

@@ -31,6 +31,7 @@ do
         err="Error ($cm): ConfigMap $APPCMNAME in application namespace $APPNS does not exist or cannot be retrieved. Stop processing this taks."
         echo $err
         create_err_cm $cm "$err"
+        remove_cm $cm
         continue
     fi
 
@@ -45,12 +46,12 @@ do
 
     TARGETNAMESPACE=$(jq -r '.data.targetNamespace' /tmp/$APPCMNAME.json)
     SERVICENAME=$(jq -r '.data.serviceName' /tmp/$APPCMNAME.json)
-    ROUTENAME=$(jq -r '.data.routeName' /tmp/$APPCMNAME.json)
+    ROUTE_IDENTIFIER=$(jq -r '.data.routeIdentifier' /tmp/$APPCMNAME.json)
     ROUTETYPE=$(jq -r '.data.routeType' /tmp/$APPCMNAME.json)
     PORT=$(jq -r '.data.port' /tmp/$APPCMNAME.json)
     FQDN=$(jq -r '.data.fqdn' /tmp/$APPCMNAME.json)
 
-    oc new-app -n $TOOLNS job-routecreation-template -p TOOL_NAMESPACE=$TOOLNS -p SERVICENAME=$SERVICENAME -p PORT=$PORT -p ROUTENAME=$ROUTENAME -p ROUTETYPE=$ROUTETYPE -p TARGET_NAMESPACE=$TARGETNAMESPACE -p FQDN=$FQDN -p JOBUUID=$taskid
+    oc new-app -n $TOOLNS job-routecreation-template -p TOOL_NAMESPACE=$TOOLNS -p SERVICENAME=$SERVICENAME -p PORT=$PORT -p ROUTE_IDENTIFIER=$ROUTE_IDENTIFIER -p ROUTETYPE=$ROUTETYPE -p TARGET_NAMESPACE=$TARGETNAMESPACE -p FQDN=$FQDN -p JOBUUID=$taskid
     retVal=$?
     if [ $retVal -ne 0 ]; then
         err="Error ($cm): Cannot process template for creating CertMonger job. Stop processing this taks."

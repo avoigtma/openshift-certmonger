@@ -10,11 +10,21 @@ echo "Executing certificate request"
 #
 # The following environment variables are set from the pod executing this script snippet:
 # $FQDN
-# $ROUTENAME
+# $ROUTE_IDENTIFIER
 # $ROUTETYPE
 # $SERVICENAME
 # $PORT
 # $TARGET_NAMESPACE
+#
+CAFILE=/tmp/ca.crt
+CERTFILE=/tmp/cert.crt
+KEYFILE=/tmp/cert.key
+DESTCAFILE=/tmp/reenc-ca.crt
+MSGFILE=/tmp/msg.txt
+ERRFILE=/tmp/err.txt
+ERR=""
+echo >$MSGFILE
+echo >$ERRFILE
 #
 # BEGIN CERTIFICATE REQUEST
 #
@@ -27,20 +37,77 @@ getcert add-scep-ca -c MY-SCEP-CA -u https://scep.pki.url.example.com/my/scep/pk
 sleep 16
 # retrieve the certificate via SCEP
 # Do not use strings with whitespaces for CN, OU or O
-getcert request -I ${FQDN} -c MY-SCEP-CA -N "CN=${FQDN},OU=MyOrgUnitName,O=MyOrgName" -L $PKIPASSPHRASE -w -v -f /tmp/cert.crt -k /tmp/cert.key
+getcert request -I ${FQDN} -c MY-SCEP-CA -N "CN=${FQDN},OU=MyOrgUnitName,O=MyOrgName" -L $PKIPASSPHRASE -w -v -f $CERTFILE -k $KEYFILE
 sleep 8
 #
 echo "Certificate request completed"
 # Check if cert files were created
-[ -f /tmp/cert.crt ] || exit 1
+if [ -f $CERTFILE ]
+then
+  echo "Certificate retrieved from PKI"
+else
+  # create cm with error information
+  ERR="No certificate retrieved from PKI"
+  echo $ERR >$ERRFILE
+  STATUS=failed
+  oc create cm -n $TOOL_NAMESPACE $JOB-status --from-literal=status=$STATUS --from-file=errtext=$ERRFILE --from-file=message=$MSGFILE
+  exit 1
+fi
+#
+#
 # END CERTIFICATE REQUEST
 #
 # Create the route object
 # in addition we save the certificates in a ConfigMap in the target namespace
-CERTFILE=/tmp/cert.crt
-KEYFILE=/tmp/cert.key
+#
 echo "Creating route in namespace $TARGET_NAMESPACE"
-oc create cm -n $TARGET_NAMESPACE route-$ROUTENAME-certs --from-file=cert.cer=$CERTFILE --from-file=cert.key=$KEYFILE
-oc create route $ROUTETYPE $ROUTENAME -n $TARGET_NAMESPACE --service=$SERVICENAME --cert=$CERTFILE --key=$KEYFILE --hostname=$FQDN --port=$PORT
-echo "Route created"
+if [ $ROUTETYPE == edge ]
+then
+  echo "Creating edge route"
+  oc create route $ROUTETYPE $ROUTE_IDENTIFIER -n $TARGET_NAMESPACE --insecure-policy=Redirect --service=$SERVICENAME --cert=$CERTFILE --key=$KEYFILE --ca-cert=$CAFILE --hostname=$FQDN --port=$PORT >$MSGFILE 2>&1
+  RES=$?
+elif [ $ROUTETYPE == passthrough ]
+then
+  echo "Creating passthrough route"
+  oc create route $ROUTETYPE $ROUTE_IDENTIFIER -n $TARGET_NAMESPACE --insecure-policy=Redirect --service=$SERVICENAME  --hostname=$FQDN --port=$PORT >$MSGFILE 2>&1
+  RES=$?
+elif [ $ROUTETYPE == reencrypt ]
+then
+  echo "Creating reencrypt route"
+  oc get secret $REENC_CA_SECRET -n $TARGET_NAMESPACE -o json | jq '.data."tls.crt"' | sed 's/\"//g' | base64 -d >$DESTCAFILE
+  RES=$?
+  if [ $RES == 0 ]
+  then
+    oc create route $ROUTETYPE $ROUTE_IDENTIFIER -n $TARGET_NAMESPACE --insecure-policy=Redirect --service=$SERVICENAME --cert=$CERTFILE --key=$KEYFILE --ca-cert=$CAFILE --dest-ca-cert=$DESTCAFILE --hostname=$FQDN --port=$PORT >$MSGFILE 2>&1
+    RES=$?
+  else
+    ERR="$ROUTETYPE route: cannot get reencrypt cert $REENC_CA_SECRET in namespace $TARGET_NAMESPACE"
+    RES=1
+  fi
+else
+  ERR="unsupported route type $ROUTETYPE"
+  echo $ERR
+  RES=2
+fi
+#
+if [ $RES == 0 ]
+then
+  # create secret for created certificates
+  echo "Route $ROUTETYPE $ROUTE_IDENTIFIER created"
+  STATUS=success
+  if [ -f $DESTCAFILE ]
+  then
+    # store certificate file, associated key and destination ca for reencrypt route
+    oc create secret generic route-$ROUTE_IDENTIFIER-certs -n $TARGET_NAMESPACE --from-file=cert.cer=$CERTFILE --from-file=cert.key=$KEYFILE --from-file=ca.cer=$CAFILE --from-file=destca.cer=$DESTCAFILE
+  else
+    # store certificate file, associated key and destination ca for edge or passthru route
+    oc create secret generic route-$ROUTE_IDENTIFIER-certs -n $TARGET_NAMESPACE --from-file=cert.cer=$CERTFILE --from-file=cert.key=$KEYFILE --from-file=ca.cer=$CAFILE
+  fi
+else
+  # create cm with error information
+  echo "Error creating route $ROUTETYPE $ROUTE_IDENTIFIER : $ERR"
+  echo $ERR >$ERRFILE
+  STATUS=failed
+  oc create cm -n $TOOL_NAMESPACE $JOB-status --from-literal=status=$STATUS --from-file=errtext=$ERRFILE --from-file=message=$MSGFILE
+fi
 #

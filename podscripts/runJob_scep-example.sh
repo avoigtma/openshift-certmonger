@@ -14,7 +14,7 @@
 # $PORT
 # $TARGET_NAMESPACE
 #
-CAFILE=/tmp/ca.crt
+CAFILE=/tools/ca/ca.crt
 CERTFILE=/tmp/cert.crt
 KEYFILE=/tmp/cert.key
 DESTCAFILE=/tmp/reenc-ca.crt
@@ -29,7 +29,7 @@ echo >$ERRFILE
 echo "Executing certificate request"
 #
 # copy the corporate root ca file from mounted config map to '/etc/pki/ca-trust/source/anchors' and update ca trust
-cp /tools/ca/ca.crt /etc/pki/ca-trust/source/anchors/corp-root-ca.crt
+cp $CAFILE /etc/pki/ca-trust/source/anchors/corp-root-ca.crt
 update-ca-trust
 #
 timeout_budget=120

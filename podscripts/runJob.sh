@@ -8,7 +8,7 @@
 # $PORT
 # $TARGET_NAMESPACE
 #
-CAFILE=/tmp/ca.crt
+CAFILE=/tools/ca/ca.crt
 CERTFILE=/tmp/cert.crt
 KEYFILE=/tmp/cert.key
 DESTCAFILE=/tmp/reenc-ca.crt

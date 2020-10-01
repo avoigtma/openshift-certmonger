@@ -104,7 +104,7 @@ oc adm policy add-scc-to-user anyuid -z certmonger-job-sa -n certificate-tool
 
 Unless the example for self-signed certificates is used, the Job requesting the certificate requires to have the corporate root CA (public key part) to be part of the container's trust store.
 
-A Secret is used to hold the root CA which is mounted to the Job Pod. At this point also make sure the the `trustedCA` bundle is set in the clusters proxy configuration and that the CA's `ca.crt` file is saved in the DER format.
+A Secret is used to hold the root CA which is mounted to the Job Pod. At this point also make sure that the `trustedCA` bundle is set in the clusters proxy configuration and that the CA's `ca.crt` file is saved in the DER format.
 
 ```shell
 oc create secret -n certificate-tool generic ca-secret --from-file=ca.crt=/path/to/ca.crt

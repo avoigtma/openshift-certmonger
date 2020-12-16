@@ -28,7 +28,7 @@ do
     oc get cm $APPCMNAME -n $APPNS -o json >/tmp/$APPCMNAME.json
     retVal=$?
     if [ $retVal -ne 0 ]; then
-        err="Error ($cm): ConfigMap $APPCMNAME in application namespace $APPNS does not exist or cannot be retrieved. Stop processing this taks."
+        err="Error ($cm): ConfigMap $APPCMNAME in application namespace $APPNS does not exist or cannot be retrieved. Stop processing this task."
         echo $err
         create_err_cm $cm "$err"
         remove_cm $cm
@@ -37,7 +37,7 @@ do
 
     APPAPPUUID=$(jq -r '.data.taskuuid' /tmp/$APPCMNAME.json)
     if [ $APPAPPUUID != $APPUUID ]; then
-        err="Error ($cm): AppUUID value differs from creation request and value ConfigMap in application namespace. Suspecting fraud. Stop processing this taks."
+        err="Error ($cm): AppUUID value differs from creation request and value ConfigMap in application namespace. Suspecting fraud. Stop processing this task."
         echo $err
         create_err_cm $cm "$err"
         remove_cm $cm
@@ -54,7 +54,7 @@ do
     oc new-app -n $TOOLNS job-routecreation-template -p TOOL_NAMESPACE=$TOOLNS -p SERVICENAME=$SERVICENAME -p PORT=$PORT -p ROUTE_IDENTIFIER=$ROUTE_IDENTIFIER -p ROUTETYPE=$ROUTETYPE -p TARGET_NAMESPACE=$TARGETNAMESPACE -p FQDN=$FQDN -p JOBUUID=$taskid
     retVal=$?
     if [ $retVal -ne 0 ]; then
-        err="Error ($cm): Cannot process template for creating CertMonger job. Stop processing this taks."
+        err="Error ($cm): Cannot process template for creating CertMonger job. Stop processing this task."
         echo $err
         create_err_cm $cm "$err"
         remove_cm $cm

@@ -159,7 +159,9 @@ oc create -f openshift/cronJob.certmonger.yaml
 
 ## Enable User to request Certificates
 
-Add the user to the Role in the tools Namespace:
+A rolebinding for a specific role already exists (see above) which allows any authenticated user to submit requests for Route creation.
+
+In case only selected users should obtain these permissions, delete the rolebinding created before and individually add the allowed users (or Groups) to the Role in the tools Namespace:
 
 ```shell
 oc adm policy add-role-to-user job-initiator-role <username> --role-namespace=certificate-tool -n certificate-tool

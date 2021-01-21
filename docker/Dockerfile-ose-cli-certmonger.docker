@@ -1,7 +1,7 @@
 FROM centos:centos8
 
 # change to ENV variable
-ARG OCVERSION=4.4.13
+ARG OCVERSION=4.6.12
 ARG USER=1001
 ARG APP_ROOT=/tools
 
@@ -38,7 +38,7 @@ RUN wget --no-verbose https://mirror.openshift.com/pub/openshift-v4/clients/ocp/
     && rm -f openshift-client-linux-$OCVERSION.tar.gz
 
 ENV PATH=${APP_ROOT}/bin:${PATH} HOME=${APP_ROOT}
-           
+
 RUN chmod 755 ${APP_ROOT}/bin/* \
     && chgrp -R 0 ${APP_ROOT} \
     && chmod -R g=u ${APP_ROOT} \

@@ -26,7 +26,6 @@ echo "Executing certificate request"
 # demo only using self-signed certificate; as for selfsigned certs there is no CA, we create a dummy ca.cer file
 # Do not use strings with whitespaces for CN, OU or O
 selfsign-getcert request -w -f $CERTFILE -k $KEYFILE -N "CN=$FQDN,OU=example.com,O=myorg" -D "$FQDN" -U id-kp-serverAuth
-ls -l /tmp
 touch $CAFILE
 #
 echo "Certificate request completed"
@@ -73,6 +72,10 @@ then
     ERR="$ROUTETYPE route: cannot get reencrypt cert $REENC_CA_SECRET in namespace $TARGET_NAMESPACE"
     RES=1
   fi
+elif [ $ROUTETYPE == none ]
+then
+  echo "Route type 'none', no route is being created."
+  RES=0
 else
   ERR="unsupported route type $ROUTETYPE"
   echo $ERR
@@ -82,7 +85,7 @@ fi
 if [ $RES == 0 ]
 then
   # create secret for created certificates
-  echo "Route $ROUTETYPE $ROUTE_IDENTIFIER created"
+  echo "Route $ROUTETYPE $ROUTE_IDENTIFIER created. Creating secret containing retrieved certificate."
   STATUS=success
   if [ -f $DESTCAFILE ]
   then

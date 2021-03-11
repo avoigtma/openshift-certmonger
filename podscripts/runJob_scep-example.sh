@@ -100,6 +100,10 @@ then
     ERR="$ROUTETYPE route: cannot get reencrypt cert $REENC_CA_SECRET in namespace $TARGET_NAMESPACE"
     RES=1
   fi
+elif [ $ROUTETYPE == none ]
+then
+  echo "Route type 'none', no route is being created."
+  RES=0
 else
   ERR="unsupported route type $ROUTETYPE"
   echo $ERR
@@ -109,7 +113,7 @@ fi
 if [ $RES == 0 ]
 then
   # create secret for created certificates
-  echo "Route $ROUTETYPE $ROUTE_IDENTIFIER created"
+  echo "Route $ROUTETYPE $ROUTE_IDENTIFIER created. Creating secret containing retrieved certificate."
   STATUS=success
   if [ -f $DESTCAFILE ]
   then

@@ -56,7 +56,7 @@ parameters:
   - description: The port number of the inbound port of the service to which the route is pointing to.
     name: PORT
     required: true
-  - description: 'The type of the route to be created. Use either ''edge'', ''passthrough'' or ''reencrypt''.'
+  - description: 'The type of the route to be created. Use either ''edge'', ''passthrough'', ''reencrypt'', or ''none''. If you specify ''none'', a certificate is requested and stored as a secret, but no route is being created.'
     name: ROUTETYPE
     required: true
     value: edge

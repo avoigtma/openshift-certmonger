@@ -1,7 +1,7 @@
 FROM centos:centos8
 
 # change to ENV variable
-ARG OCVERSION=4.6.12
+ARG OCVERSION=4.6.19
 ARG USER=1001
 ARG APP_ROOT=/tools
 

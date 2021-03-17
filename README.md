@@ -35,6 +35,7 @@ Load the template to create to the requests into the public `openshift` Namespac
 
 ```shell
 oc create -f openshift/template.cm.certmonger.yaml
+oc create -f openshift/template.cm.certmonger-certonly.yaml
 oc create -f openshift/template.job.certmonger.yaml
 ```
 
@@ -167,6 +168,18 @@ In case only selected users should obtain these permissions, delete the rolebind
 oc adm policy add-role-to-user job-initiator-role <username> --role-namespace=certificate-tool -n certificate-tool
 ```
 
+## UI
+
+Authenticate at the console of the corresponding cluster. Then navigate through the following pages:
+
+* Developer View
+* Click on `+ Add`
+* Chosse `From Catalog`
+* Filter on `Other` and `Template`
+* Choose `Route Creation Request Template` in case you want to create a Route with a TLS certificate (certificate is stored as well in a secret)
+** Choose `Certificate Creation Request Template` in case you want to request a certificate only (stored in a secret) but not create a Route
+
+Fill in the parameters as described. Then wait up to two minutes until the request is processed by the CronJob.
 ## CLI
 
 ```shell
@@ -182,17 +195,7 @@ oc new-app routecreation-request-template \
 
 Change the parameters to your needs. Then wait up to two minutes until the request is processed by the CronJob.
 
-## UI
-
-Authenticate at the console of the corresponding cluster. Then navigate through the following pages:
-
-* Developer View
-* Click on `+ Add`
-* Chosse `From Catalog`
-* Filter on `Other` and `Template`
-* Choose `Route Creation Request Template`
-
-Fill in the parameters as described. Then wait up to two minutes until the request is processed by the CronJob.
+For certificate request only, use `oc new-app certcreation-request-template` with appropriate parameters.
 
 # Technical Information
 

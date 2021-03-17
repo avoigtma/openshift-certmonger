@@ -71,7 +71,7 @@ objects:
                 name: route-creation-script
               name: script
 parameters:
-  - description: The namespace name where the route is being created.
+  - description: The namespace name where the route is being created. This is usually the same as the namespace you see above.
     name: TARGET_NAMESPACE
     required: true
   - description: The name of the service object exposed by the route. This service already exists in the target namespace.
@@ -80,7 +80,7 @@ parameters:
   - description: The name (identifier) of the route object to be created.
     name: ROUTE_IDENTIFIER
     required: true
-  - description: 'The FQDN of the route to be created. Ensure the length adheres to OpenShift / DNS conventions, i.e., max length 63 characters.'
+  - description: 'The FQDN of the route to be created. Ensure the length adheres to OpenShift / DNS conventions, i.e., max length 63 characters. Be sure to include full domain.'
     name: FQDN
     required: true
   - description: The port number of the inbound port of the service to which the route is pointing to.

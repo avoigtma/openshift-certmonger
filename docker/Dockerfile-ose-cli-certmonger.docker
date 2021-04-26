@@ -1,7 +1,7 @@
 FROM centos:centos8
 
 # change to ENV variable
-ARG OCVERSION=4.6.19
+ARG OCVERSION=4.7.7
 ARG USER=1001
 ARG APP_ROOT=/tools
 
@@ -10,7 +10,7 @@ USER root
 ENV container=oci
 
 # install some additional packages
-RUN INSTALL_PKGS="systemd wget net-tools less certmonger jq git"; \
+RUN INSTALL_PKGS="systemd wget net-tools less certmonger jq git openssl"; \
     yum install -q -y --setopt=tsflags=nodocs $INSTALL_PKGS; \
     rpm -V $INSTALL_PKGS; \
     yum -y -q update; \

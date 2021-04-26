@@ -1,0 +1,37 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: certificate-expirationcheck
+  namespace: certificate-tool
+spec:
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: expcheck
+              image: image-registry.openshift-image-registry.svc:5000/certificate-tool/certmonger:latest
+              volumeMounts:
+                - mountPath: /tools/scripts
+                  name: check-script
+                  readOnly: true
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  #/bin/bash
+                  # workaround: ose-cli image sets $HOME to "/" which is not writable and prevents 'oc' to create $HOME/.kube directory
+                  # hence we set to writable '/tmp' directory
+                  export HOME=/tmp
+                  . /tools/scripts/cronCheckRoutes.sh
+          restartPolicy: OnFailure
+          securityContext:
+            runAsUser: 0
+          serviceAccountName: certmonger-job-sa
+          volumes:
+          - name: check-script
+            configMap:
+              name: cronjob-route-check-script
+  schedule: "58 15 * * *"
+  successfulJobsHistoryLimit: 3

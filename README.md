@@ -26,7 +26,7 @@ Create a Namespace for hosting the `certmonger` tool.
 A Namespace called `certificate-tool` is used which may host any kind of operation-support tools for the platform. But any other namespace can be used as well. In this case adjust the YAML files respectively.
 
 ```shell
-oc create -f openshift/namespace.certTool.yaml
+oc apply -f openshift/namespace.certTool.yaml
 ```
 
 ## Load Templates
@@ -34,9 +34,9 @@ oc create -f openshift/namespace.certTool.yaml
 Load the template to create to the requests into the public `openshift` Namespace. The template for the `certmonger job` is loaded within the tools Namespace (`certificate-tool`).
 
 ```shell
-oc create -f openshift/template.cm.certmonger.yaml
-oc create -f openshift/template.cm.certmonger-certonly.yaml
-oc create -f openshift/template.job.certmonger.yaml
+oc apply -f openshift/template.cm.certmonger.yaml
+oc apply -f openshift/template.cm.certmonger-certonly.yaml
+oc apply -f openshift/template.job.certmonger.yaml
 ```
 
 ## Custom Role
@@ -44,8 +44,8 @@ oc create -f openshift/template.job.certmonger.yaml
 In order to allow creation of the requests by any user, we establish a custom Role within the tool Namespace. That Role (and role mapping) will allow any authenticated user to *only create* a ConfigMap for a certificate request using the template within the tools Namespace.
 
 ```shell
-oc create -f openshift/role.certmonger.yaml
-oc create -f openshift/rolebinding.certmongerRole.yaml
+oc apply -f openshift/role.certmonger.yaml
+oc apply -f openshift/rolebinding.certmongerRole.yaml
 ```
 
 ### Import Base Image
@@ -61,8 +61,8 @@ oc import-image centos --from=registry.centos.org/centos:centos8 -n openshift --
 Build the container image from a Dockerfile. The image includes both `certmonger` and the `oc` client.
 
 ```shell
-oc create -f openshift/is.certmonger.yaml
-oc create -f openshift/buildcfg.certmongerDocker.yaml
+oc apply -f openshift/is.certmonger.yaml
+oc apply -f openshift/buildcfg.certmongerDocker.yaml
 ```
 
 In case the creation of the BuildConfig object did not already start a build, or in case the Dockerfile changed, run:
@@ -76,7 +76,7 @@ oc start-build certmonger
 Create a ServiceAccount to run the Job Pod for Route creation.
 
 ```shell
-oc create -f openshift/sa.certMongerJob.yaml
+oc apply -f openshift/sa.certMongerJob.yaml
 ```
 
 ### Create Role Binding for ServiceAccount
@@ -84,7 +84,7 @@ oc create -f openshift/sa.certMongerJob.yaml
 The ServiceAccount needs to get a RoleBinding to obtain the required permissions.
 
 ```shell
-oc create -f openshift/crb.certmongerJob.yaml
+oc apply -f openshift/crb.certmongerJob.yaml
 ```
 
 > For simplicity the `cluster-admin` Role is used. It would be a better solution to create a custom Role definition having only the required permissions for the ServiceAccount. However, as the pruning Jobs anyway run in a Namespace owned by a platform team and thus `cluster-admin` enabled users, using `cluster-admin` Role is acceptable.
@@ -125,6 +125,8 @@ When accessing the PKI using SCEP protocol, a passphrase must be provided. This 
 oc create secret -n certificate-tool generic pki-secret --from-literal=passphrase=supersecret
 ```
 
+When using the self-signed example simply create a Secret with a dummy value, as shown above. The Secret is not used.
+
 
 ##### ConfigMaps holding scripts
 
@@ -153,8 +155,71 @@ Create the CronJob to monitor the created requests and execute the Route creatio
 > Please adjust the schedule of the CronJob. Example runs every 2 minutes.
 
 ```shell
-oc create -f openshift/cronJob.certmonger.yaml
+oc apply -f openshift/cronJob.certmonger.yaml
 ```
+
+# Checking and Alerting for Certificate Expiration
+
+We create a CronJob which on a daily base assesses all Routes in the cluster checking for expiration of the certificate.
+
+> This happens irrespectively of whether a Route uses a custom certificate. It thus would capture expiration of the wildcard certificate for the '*.apps' domain of OpenShift as well.
+
+The check is - with current configuration, adjust scripts otherwise - done for 90 and 30 days of expiration. Identified Routes are collected in two ConfigMaps (`cert-exp-30d` and `cert-exp-90d`). A PrometheusRule is created which issues alerts in case these ConfigMaps are found.
+
+## Create Image Pull Secret
+
+You will need to create a registry service account to use prior to completing any of the following tasks. See <https://access.redhat.com/terms-based-registry/> to create the pull secret.
+
+Once your pull secret is created there, the page provides you access to download the secret and import it into OpenShift.
+
+Yaml File Example `pullSecretSample.yaml`
+
+> Note: get the correct one from the Web page to obtain the correct pull secret. Example has dummy value only and the Yaml file cannot be imported as is!
+
+> Remember to set the correct target namespace (`certificate-tool`) in the Secret Yaml file.
+
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: xyz-user-pull-secret
+  namespace: cluster-operations
+data:
+  .dockerconfigjson: ey...replace-with-concrete-pull-secret...fQ==
+type: kubernetes.io/dockerconfigjson
+```
+
+Import the secret.
+
+```shell
+oc apply -f pullSecretSample.yaml
+```
+
+## Create ConfigMaps for Scripts
+
+Create ConfigMaps covering additional script:
+
+```shell
+oc create cm -n certificate-tool cronjob-route-check-script --from-file=cronCheckRoutes.sh=./podscripts/cronCheckRoutes.sh
+```
+## Create CronJob
+
+Create a CronJob which on a daily base checks all routes for expiration. It is sufficient that this CronJob will run once a day.
+
+> Note the OpenShift nodes use UTC time zone when defining the schedule for the CronJob. Be aware of time zone differnce (incl. daylight savings time).
+
+```shell
+oc apply -f openshift/cronJob.checkCert.yaml
+```
+## Create Prometheus Alerting Rule
+
+Create a PrometheusRule which creates Alerts on certificates which expire within 90 and 30 days, based upon existence of the ConfigMaps created by the CronJob.
+
+```shell
+oc apply -f openshift/alertRule_expiration.yaml
+```
+
 
 # Usage
 

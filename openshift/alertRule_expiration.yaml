@@ -1,0 +1,21 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: expiration-alert
+  namespace: certificate-tool
+spec:
+  groups:
+  - name: expiration-alert
+    rules:
+    - alert: RouteCertificateExpirationAlert90d
+      annotations:
+        message: 'Routes with certificate expirations within 90 days exist.'
+      expr: count(kube_configmap_info{namespace="certificate-tool",configmap="cert-exp-90d"})>0
+      labels:
+        severity: info
+    - alert: RouteCertificateExpirationAlert30d
+      annotations:
+        message: 'Routes with certificate expirations within 30 days exist.'
+      expr: count(kube_configmap_info{namespace="certificate-tool",configmap="cert-exp-30d"})>0
+      labels:
+        severity: warning

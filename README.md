@@ -242,9 +242,10 @@ Authenticate at the console of the corresponding cluster. Then navigate through 
 * Chosse `From Catalog`
 * Filter on `Other` and `Template`
 * Choose `Route Creation Request Template` in case you want to create a Route with a TLS certificate (certificate is stored as well in a secret)
-** Choose `Certificate Creation Request Template` in case you want to request a certificate only (stored in a secret) but not create a Route
+	* Choose `Certificate Creation Request Template` in case you want to request a certificate only (stored in a secret) but not create a Route
 
 Fill in the parameters as described. Then wait up to two minutes until the request is processed by the CronJob.
+
 ## CLI
 
 ```shell
@@ -261,6 +262,11 @@ oc new-app routecreation-request-template \
 Change the parameters to your needs. Then wait up to two minutes until the request is processed by the CronJob.
 
 For certificate request only, use `oc new-app certcreation-request-template` with appropriate parameters.
+
+Supported Route types:
+
+* Use either `edge`, `passthrough`, `reencrypt`, or `none`.
+* If you specify `none`, a certificate is requested and stored as a secret, but no route is being created.'
 
 # Technical Information
 

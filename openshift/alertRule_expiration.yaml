@@ -9,13 +9,13 @@ spec:
     rules:
     - alert: RouteCertificateExpirationAlert90d
       annotations:
-        message: 'Routes with certificate expirations within 90 days exist.'
+        message: Routes with certificate expirations within 90 days exist. See ConfigMap in "certificate-tool" namespace for details. For more information refer to 'oc -n certificate-tool describe configmap cert-exp-90d'{{ with $console_url := "console_url" | query }}{{ if ne (len (label "url" (first $console_url ) ) ) 0}} or {{ label "url" (first $console_url ) }}/k8s/ns/certificate-tool/configmaps/cert-exp-90d{{ end }}{{ end }}.
       expr: count(kube_configmap_info{namespace="certificate-tool",configmap="cert-exp-90d"})>0
       labels:
         severity: info
     - alert: RouteCertificateExpirationAlert30d
       annotations:
-        message: 'Routes with certificate expirations within 30 days exist.'
+        message: Routes with certificate expirations within 30 days exist. See ConfigMap in "certificate-tool" namespace for details. For more information refer to 'oc -n certificate-tool describe configmap cert-exp-30d'{{ with $console_url := "console_url" | query }}{{ if ne (len (label "url" (first $console_url ) ) ) 0}} or {{ label "url" (first $console_url ) }}/k8s/ns/certificate-tool/configmaps/cert-exp-30d{{ end }}{{ end }}.
       expr: count(kube_configmap_info{namespace="certificate-tool",configmap="cert-exp-30d"})>0
       labels:
         severity: warning

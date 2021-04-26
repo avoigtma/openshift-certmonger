@@ -40,7 +40,7 @@ create_result_cm()
   then
     # delete old CM and create new one from file content of identified routes
     log "Creating ConfigMap for list of routes covering expired certificates for $days days."
-    oc delete -n $TOOL_NAMESPACE configmap $cmname --ignore-not-found && oc create -n $TOOL_NAMESPACE configmap $cmname --from-file=expiring=$targetfile
+    oc delete -n $TOOL_NAMESPACE configmap $cmname --ignore-not-found && oc create -n $TOOL_NAMESPACE configmap $cmname --from-file=expiring-$days-days=$targetfile
     if [ $? -gt 0 ]
     then
       log "Error - ConfigMap for list of routes covering expired certificates for $days days not (re-) created. See previous log entries for discovered expiring route certificates."

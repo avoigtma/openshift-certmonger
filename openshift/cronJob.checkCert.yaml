@@ -33,5 +33,5 @@ spec:
           - name: check-script
             configMap:
               name: cronjob-route-check-script
-  schedule: "58 15 * * *"
+  schedule: "15 5 * * *"
   successfulJobsHistoryLimit: 3

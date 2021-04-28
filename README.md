@@ -166,35 +166,6 @@ We create a CronJob which on a daily base assesses all Routes in the cluster che
 
 The check is - with current configuration, adjust scripts otherwise - done for 90 and 30 days of expiration. Identified Routes are collected in two ConfigMaps (`cert-exp-30d` and `cert-exp-90d`). A PrometheusRule is created which issues alerts in case these ConfigMaps are found.
 
-## Create Image Pull Secret
-
-You will need to create a registry service account to use prior to completing any of the following tasks. See <https://access.redhat.com/terms-based-registry/> to create the pull secret.
-
-Once your pull secret is created there, the page provides you access to download the secret and import it into OpenShift.
-
-Yaml File Example `pullSecretSample.yaml`
-
-> Note: get the correct one from the Web page to obtain the correct pull secret. Example has dummy value only and the Yaml file cannot be imported as is!
-
-> Remember to set the correct target namespace (`certificate-tool`) in the Secret Yaml file.
-
-
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: xyz-user-pull-secret
-  namespace: cluster-operations
-data:
-  .dockerconfigjson: ey...replace-with-concrete-pull-secret...fQ==
-type: kubernetes.io/dockerconfigjson
-```
-
-Import the secret.
-
-```shell
-oc apply -f pullSecretSample.yaml
-```
 
 ## Create ConfigMaps for Scripts
 

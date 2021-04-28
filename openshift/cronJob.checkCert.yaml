@@ -12,6 +12,7 @@ spec:
           containers:
             - name: expcheck
               image: image-registry.openshift-image-registry.svc:5000/certificate-tool/certmonger:latest
+              imagePullPolicy: Always
               volumeMounts:
                 - mountPath: /tools/scripts
                   name: check-script

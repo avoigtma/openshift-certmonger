@@ -17,6 +17,7 @@ spec:
                   #/bin/bash
                   . /tools/cm/cronProcess.sh
               image: 'image-registry.openshift-image-registry.svc:5000/certificate-tool/certmonger:latest'
+              imagePullPolicy: Always
               name: certmonger
               volumeMounts:
                 - mountPath: /tools/cm

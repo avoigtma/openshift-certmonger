@@ -51,6 +51,7 @@ objects:
                       key: passphrase
                       name: pki-secret
               image: 'image-registry.openshift-image-registry.svc:5000/${TOOL_NAMESPACE}/certmonger:latest'
+              imagePullPolicy: Always
               name: certmonger
               volumeMounts:
                 - mountPath: /tools/ca

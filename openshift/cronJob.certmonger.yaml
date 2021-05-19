@@ -7,6 +7,10 @@ spec:
   failedJobsHistoryLimit: 1
   jobTemplate:
     spec:
+      activeDeadlineSeconds: 300
+      backoffLimit: 0
+      completions: 1
+      parallelism: 1
       template:
         spec:
           containers:
@@ -15,6 +19,10 @@ spec:
                 - '-c'
                 - |
                   #/bin/bash
+                  # workaround: ose-cli image sets $HOME to "/" which is not writable and prevents 'oc' to create $HOME/.kube directory
+                  # hence we set to writable '/tmp' directory
+                  export HOME=/tmp
+                  #
                   . /tools/cm/cronProcess.sh
               image: 'image-registry.openshift-image-registry.svc:5000/certificate-tool/certmonger:latest'
               imagePullPolicy: Always

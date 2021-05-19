@@ -33,7 +33,11 @@ objects:
                 - /bin/bash
                 - '-c'
                 - |
-                  #!/bin/bash
+                  #/bin/bash
+                  # workaround: ose-cli image sets $HOME to "/" which is not writable and prevents 'oc' to create $HOME/.kube directory
+                  # hence we set to writable '/tmp' directory
+                  export HOME=/tmp
+                  #
                   export SERVICENAME=${SERVICENAME}
                   export ROUTE_IDENTIFIER=${ROUTE_IDENTIFIER}
                   export ROUTETYPE=${ROUTETYPE}

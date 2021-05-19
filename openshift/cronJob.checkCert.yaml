@@ -7,6 +7,10 @@ spec:
   failedJobsHistoryLimit: 1
   jobTemplate:
     spec:
+      activeDeadlineSeconds: 300
+      backoffLimit: 0
+      completions: 1
+      parallelism: 1
       template:
         spec:
           containers:

@@ -1,0 +1,16 @@
+apiVersion: authorization.openshift.io/v1
+kind: Role
+metadata:
+  annotations:
+    openshift.io/description: A user that has additional permissions create configmaps in the namespace. Is intended to be called by any-authenticated-user.
+    openshift.io/reconcile-protect: 'false'
+  name: job-initiator-role
+  namespace: certificate-tool
+rules:
+  - apiGroups:
+      - ''
+    resources:
+      - configmaps
+    verbs:
+      - create
+      - get

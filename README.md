@@ -48,6 +48,8 @@ oc apply -f openshift/role.certmonger.yaml
 oc apply -f openshift/rolebinding.certmongerRole.yaml
 ```
 
+> In order to use Helm to consume the templates and create certificates, Helm requires "get" permission on ConfigMaps in the tools namespace. This relaxes a bit the permission model. Therefore, optionally use `openshift/role.certmonger-allowHelm.yaml`.
+
 ### Import Base Image
 
 Run the following as `cluster-admin`, to import into `openshift` Namespace.

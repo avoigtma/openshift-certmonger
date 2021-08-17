@@ -21,12 +21,21 @@ echo >$ERRFILE
 #
 # BEGIN CERTIFICATE REQUEST
 #
-echo "Executing certificate request"
+echo "Executing certificate request for '$FQDN'"
+#
+# create SAN list
+sanOptList=""
+sanOpt="-D"
+for sanfqdn in $(echo $SAN " " $FQDN)
+do
+  sanOptList=$sanOptList" "$sanOpt" "$sanfqdn;
+done
+echo "   SAN options list is: " $sanOptList
 #
 # replace the commands for 'certmonger' in this section with suitable commands for accessing the PKI
 # demo only using self-signed certificate; as for selfsigned certs there is no CA, we create a dummy ca.cer file
 # Do not use strings with whitespaces for CN, OU or O
-selfsign-getcert request -w -f $CERTFILE -k $KEYFILE -N "CN=$FQDN,OU=example.com,O=myorg" -D "$FQDN" -U id-kp-serverAuth
+selfsign-getcert request -w -f $CERTFILE -k $KEYFILE -N "CN=$FQDN,OU=example.com,O=myorg" $(echo $sanOptList) -U id-kp-serverAuth
 touch $CAFILE
 #
 echo "Certificate request completed"

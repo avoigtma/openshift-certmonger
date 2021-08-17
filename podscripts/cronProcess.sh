@@ -50,9 +50,10 @@ do
     ROUTETYPE=$(jq -r '.data.routeType' /tmp/$APPCMNAME.json)
     PORT=$(jq -r '.data.port' /tmp/$APPCMNAME.json)
     FQDN=$(jq -r '.data.fqdn' /tmp/$APPCMNAME.json)
+    SAN=$(jq -r '.data.san' /tmp/$APPCMNAME.json)
     REENC_CA_SECRET=$(jq -r '.data.reencSecretName' /tmp/$APPCMNAME.json)
 
-    oc new-app -n $TOOLNS job-routecreation-template -p TOOL_NAMESPACE=$TOOLNS -p SERVICENAME=$SERVICENAME -p PORT=$PORT -p ROUTE_IDENTIFIER=$ROUTE_IDENTIFIER -p ROUTETYPE=$ROUTETYPE -p REENC_CA_SECRET=$REENC_CA_SECRET -p TARGET_NAMESPACE=$TARGETNAMESPACE -p FQDN=$FQDN -p JOBUUID=$taskid
+    oc new-app -n $TOOLNS job-routecreation-template -p TOOL_NAMESPACE=$TOOLNS -p SERVICENAME=$SERVICENAME -p PORT=$PORT -p ROUTE_IDENTIFIER=$ROUTE_IDENTIFIER -p ROUTETYPE=$ROUTETYPE -p REENC_CA_SECRET=$REENC_CA_SECRET -p TARGET_NAMESPACE=$TARGETNAMESPACE -p FQDN=$FQDN -p SAN="$SAN" -p JOBUUID=$taskid
     retVal=$?
     if [ $retVal -ne 0 ]; then
         err="Error ($cm): Cannot process template for creating CertMonger job. Stop processing this task."

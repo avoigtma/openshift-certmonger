@@ -8,10 +8,10 @@ metadata:
     description: This templates instantiates data for triggering the creation of a route in a target namespace and requests a route-specific TLS certificate using 'certmonger' tool from a SCEP API.
     iconClass: icon-none
     openshift.io/display-name: Certificate Creation Request Template
-    template.openshift.io/documentation-url: TODO
+    template.openshift.io/documentation-url: https://github.com/avoigtma/openshift-certmonger
     template.openshift.io/long-description: This templates instantiates a Job requesting a TLS certificate using 'certmonger' tool from a SCEP API for usage with a route in a target namespace. The certificate is placed in a Secret.
-    template.openshift.io/provider-display-name: TODO
-    template.openshift.io/support-url: TODO
+    template.openshift.io/provider-display-name: Andreas Voigtmann, https://github.com/avoigtma
+    template.openshift.io/support-url: n/a
   name: certcreation-request-template
   namespace: openshift
 objects:
@@ -28,6 +28,7 @@ objects:
   - apiVersion: v1
     data:
       fqdn: '${FQDN}'
+      san: '${SAN}'
       routeIdentifier: '${CERT_IDENTIFIER}'
       routeType: none
       targetNamespace: '${TARGET_NAMESPACE}'
@@ -47,6 +48,8 @@ parameters:
   - description: 'The FQDN of the route to be created. Ensure the length adheres to OpenShift / DNS conventions, i.e., max length 63 characters.'
     name: FQDN
     required: true
+  - description: 'Additional FQDNs to be included as SAN (Subject Alternate Name) in the certificate. If you want to set multiple SANs, specify each SAN FQN and separate by spaces. Value is optional.'
+    name: SAN
   - description: The namespace of where the route creation tool is running. Change only if you are sure the tool is deployed in a specific different namespace.
     name: TOOL_NAMESPACE
     value: certificate-tool

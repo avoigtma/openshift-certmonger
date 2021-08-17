@@ -27,7 +27,16 @@ echo >$ERRFILE
 #
 # BEGIN CERTIFICATE REQUEST
 #
-echo "Executing certificate request"
+echo "Executing certificate request for '$FQDN'"
+#
+# create SAN list
+sanOptList=""
+sanOpt="-D"
+for sanfqdn in $(echo $SAN " " $FQDN)
+do
+  sanOptList=$sanOptList" "$sanOpt" "$sanfqdn;
+done
+echo "   SAN options list is: " $sanOptList
 #
 # copy the corporate root ca file from mounted config map to '/etc/pki/ca-trust/source/anchors' and update ca trust
 cp $CAFILE /etc/pki/ca-trust/source/anchors/corp-root-ca.crt
@@ -48,7 +57,7 @@ done
 #
 echo "Retrieve certificate from SCEP CA"
 # Do not use strings with whitespaces for CN, OU or O
-getcert request -I ${FQDN} -c MY-SCEP-CA -N "CN=${FQDN},OU=MyOrgUnitName,O=MyOrgName" -L $PKIPASSPHRASE -w -v -f $CERTFILE -k $KEYFILE
+getcert request -I ${FQDN} -c MY-SCEP-CA -N "CN=${FQDN},OU=MyOrgUnitName,O=MyOrgName" $(echo $sanOptList) -L $PKIPASSPHRASE -w -v -f $CERTFILE -k $KEYFILE
 echo "Wait until the certificate request has been processed"
 until [ "$timeout_usage" -ge "$timeout_budget" ]
 do
